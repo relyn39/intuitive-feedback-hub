@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_configurations: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          model: string | null
+          provider: Database["public"]["Enums"]["ai_provider"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          model?: string | null
+          provider: Database["public"]["Enums"]["ai_provider"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          model?: string | null
+          provider?: Database["public"]["Enums"]["ai_provider"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       feedback_comments: {
         Row: {
           content: string
@@ -49,6 +79,7 @@ export type Database = {
       }
       feedbacks: {
         Row: {
+          analysis: Json | null
           conversation_at: string | null
           created_at: string | null
           customer_name: string | null
@@ -69,6 +100,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          analysis?: Json | null
           conversation_at?: string | null
           created_at?: string | null
           customer_name?: string | null
@@ -89,6 +121,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          analysis?: Json | null
           conversation_at?: string | null
           created_at?: string | null
           customer_name?: string | null
@@ -230,6 +263,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      ai_provider: "openai"
       feedback_priority: "low" | "medium" | "high" | "critical"
       feedback_source: "jira" | "notion" | "zoho" | "manual"
       feedback_status: "new" | "in_progress" | "resolved" | "closed"
@@ -348,6 +382,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_provider: ["openai"],
       feedback_priority: ["low", "medium", "high", "critical"],
       feedback_source: ["jira", "notion", "zoho", "manual"],
       feedback_status: ["new", "in_progress", "resolved", "closed"],

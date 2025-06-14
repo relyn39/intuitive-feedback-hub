@@ -3,6 +3,7 @@ import React from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { FeedbackDashboard } from '@/components/FeedbackDashboard';
+import FeedbackList from '@/components/FeedbackList';
 
 const Index = () => {
   return (
@@ -13,9 +14,10 @@ const Index = () => {
         <h1 className="text-lg font-semibold">Dashboard de Feedback</h1>
       </header>
       
-      <div className="flex-1 p-6">
+      <main className="flex-1 p-6 space-y-6">
         <FeedbackDashboard />
-      </div>
+        <FeedbackList />
+      </main>
     </div>
   );
 };
