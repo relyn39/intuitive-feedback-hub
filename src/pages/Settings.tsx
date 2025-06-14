@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -27,7 +28,7 @@ const Settings = () => {
               </p>
             </div>
             
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div className="rounded-lg border p-6">
                 <h3 className="text-lg font-medium mb-2">Integrações</h3>
                 <p className="text-sm text-muted-foreground mb-4">
@@ -50,6 +51,18 @@ const Settings = () => {
                   className="text-primary hover:underline"
                 >
                   Configurar IA →
+                </a>
+              </div>
+              <div className="rounded-lg border p-6">
+                <h3 className="text-lg font-medium mb-2">Usuários</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Gerencie o acesso e o cadastro de usuários na plataforma.
+                </p>
+                <a 
+                  href="/settings/users" 
+                  className="text-primary hover:underline"
+                >
+                  Gerenciar usuários →
                 </a>
               </div>
             </div>

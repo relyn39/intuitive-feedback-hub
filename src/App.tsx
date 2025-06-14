@@ -12,6 +12,8 @@ import SettingsIntegrations from "./pages/SettingsIntegrations";
 import SettingsAi from "./pages/SettingsAi";
 import NotFound from "./pages/NotFound";
 import FeedbackReport from "./pages/FeedbackReport";
+import AuthPage from "./pages/AuthPage";
+import SettingsUsers from "./pages/SettingsUsers";
 
 const queryClient = new QueryClient();
 
@@ -27,10 +29,12 @@ const App = () => (
             <SidebarInset className="flex-1">
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<AuthPage />} />
                 <Route path="/feedback" element={<FeedbackReport />} />
                 <Route path="/settings" element={<Settings />}>
                   <Route path="integrations" element={<SettingsIntegrations />} />
                   <Route path="ai" element={<SettingsAi />} />
+                  <Route path="users" element={<SettingsUsers />} />
                 </Route>
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
