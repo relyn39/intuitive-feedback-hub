@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { PlusCircle, Pencil } from 'lucide-react';
 import { EditUserDialog } from '@/components/EditUserDialog';
+import { AddUserDialog } from '@/components/AddUserDialog';
 
 const fetchUsers = async () => {
   const { data, error } = await supabase.from('profiles').select('id, full_name, email, created_at');
@@ -34,6 +34,7 @@ type UserProfile = {
 const SettingsUsers = () => {
   const { data: users, isLoading, error } = useQuery<UserProfile[]>({ queryKey: ['users'], queryFn: fetchUsers });
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -44,12 +45,10 @@ const SettingsUsers = () => {
             Gerencie o acesso e o cadastro de usuários na plataforma.
           </p>
         </div>
-        <Link to="/auth">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Adicionar Usuário
-          </Button>
-        </Link>
+        <Button onClick={() => setIsAddUserDialogOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Adicionar Usuário
+        </Button>
       </div>
 
       <Card>
@@ -107,6 +106,11 @@ const SettingsUsers = () => {
           }}
         />
       )}
+
+      <AddUserDialog
+        open={isAddUserDialogOpen}
+        onOpenChange={setIsAddUserDialogOpen}
+      />
     </div>
   );
 };
