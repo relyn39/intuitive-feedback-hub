@@ -49,13 +49,16 @@ export type Database = {
       }
       feedbacks: {
         Row: {
+          conversation_at: string | null
           created_at: string | null
+          customer_name: string | null
           description: string | null
           external_created_at: string | null
           external_id: string | null
           external_updated_at: string | null
           id: string
           integration_id: string | null
+          interviewee_name: string | null
           metadata: Json | null
           priority: Database["public"]["Enums"]["feedback_priority"] | null
           source: Database["public"]["Enums"]["feedback_source"]
@@ -66,13 +69,16 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          conversation_at?: string | null
           created_at?: string | null
+          customer_name?: string | null
           description?: string | null
           external_created_at?: string | null
           external_id?: string | null
           external_updated_at?: string | null
           id?: string
           integration_id?: string | null
+          interviewee_name?: string | null
           metadata?: Json | null
           priority?: Database["public"]["Enums"]["feedback_priority"] | null
           source: Database["public"]["Enums"]["feedback_source"]
@@ -83,13 +89,16 @@ export type Database = {
           user_id: string
         }
         Update: {
+          conversation_at?: string | null
           created_at?: string | null
+          customer_name?: string | null
           description?: string | null
           external_created_at?: string | null
           external_id?: string | null
           external_updated_at?: string | null
           id?: string
           integration_id?: string | null
+          interviewee_name?: string | null
           metadata?: Json | null
           priority?: Database["public"]["Enums"]["feedback_priority"] | null
           source?: Database["public"]["Enums"]["feedback_source"]

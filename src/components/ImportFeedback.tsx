@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
@@ -52,12 +51,15 @@ export const ImportFeedback = ({ setOpen }: { setOpen: (open: boolean) => void }
       skipEmptyLines: true,
       complete: async (results) => {
         const feedbacks = results.data
-          .filter((row: any): row is { title: string; description?: string } => 
+          .filter((row: any): row is { title: string } => 
             row.title && typeof row.title === 'string' && row.title.trim() !== ''
           )
-          .map((row) => ({
+          .map((row: any) => ({
             title: row.title,
             description: row.description || null,
+            customer_name: row.customer_name || null,
+            interviewee_name: row.interviewee_name || null,
+            conversation_at: row.conversation_at ? new Date(row.conversation_at).toISOString() : null,
           }));
 
         if (feedbacks.length === 0) {
@@ -118,7 +120,7 @@ export const ImportFeedback = ({ setOpen }: { setOpen: (open: boolean) => void }
           <p className="mt-4 font-semibold">
             {isDragActive ? 'Solte o arquivo aqui...' : 'Arraste e solte um arquivo CSV ou clique para selecionar'}
           </p>
-          <p className="text-xs text-muted-foreground mt-2">O arquivo deve conter colunas 'title' e 'description' (opcional).</p>
+          <p className="text-xs text-muted-foreground mt-2">Colunas: title, description (opcional), customer_name (opcional), interviewee_name (opcional), conversation_at (opcional).</p>
         </div>
       ) : (
         <div className="flex items-center justify-between space-x-2 p-3 border rounded-md bg-muted/50">

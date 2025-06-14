@@ -6,6 +6,9 @@ import { corsHeaders } from '../_shared/cors.ts'
 interface Feedback {
   title: string
   description?: string
+  customer_name?: string
+  interviewee_name?: string
+  conversation_at?: string
 }
 
 serve(async (req) => {
@@ -49,8 +52,7 @@ serve(async (req) => {
     )
 
     const feedbacksToInsert = feedbacks.map(fb => ({
-      title: fb.title,
-      description: fb.description,
+      ...fb,
       user_id: user.id,
       source: 'manual',
       status: 'new'
