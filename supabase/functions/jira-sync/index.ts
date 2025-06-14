@@ -85,8 +85,26 @@ serve(async (req) => {
     }
 
     try {
+      // Build JQL for incremental sync.
+      // We split by "order by" to remove any user-defined sorting,
+      // as we need to sort by `updated` for incremental sync to work reliably.
+      const baseJql = (jql || 'project IS NOT EMPTY').split(/ order by /i)[0].trim()
+      let finalJql = baseJql
+
+      if (integration.last_synced_at) {
+        const lastSyncedDate = new Date(integration.last_synced_at)
+        // Go back 5 minutes to avoid clock skew issues
+        lastSyncedDate.setMinutes(lastSyncedDate.getMinutes() - 5)
+        // Format to "YYYY-MM-DD HH:mm"
+        const formattedDate = lastSyncedDate.toISOString().substring(0, 16).replace('T', ' ')
+        finalJql = `(${baseJql}) AND updated >= "${formattedDate}"`
+      }
+
+      // We always order by `updated DESC` to process the most recent items first.
+      const fullJql = `${finalJql} ORDER BY updated DESC`
+
       // Fetch issues from Jira
-      const jiraResponse = await fetch(`${jiraUrl}/rest/api/2/search?jql=${encodeURIComponent(jql || 'project IS NOT EMPTY ORDER BY updated DESC')}`, {
+      const jiraResponse = await fetch(`${jiraUrl}/rest/api/2/search?jql=${encodeURIComponent(fullJql)}`, {
         headers: {
           'Authorization': `Basic ${btoa(`${email}:${apiToken}`)}`,
           'Accept': 'application/json',
