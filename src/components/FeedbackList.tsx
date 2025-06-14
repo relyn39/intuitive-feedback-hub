@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Wand2 } from 'lucide-react';
+import { Wand2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tables } from '@/integrations/supabase/types';
+import { Link } from 'react-router-dom';
 
 type Feedback = Tables<'feedbacks'>;
 
@@ -16,9 +17,13 @@ const FeedbackList = () => {
   const queryClient = useQueryClient();
 
   const { data: feedbacks, isLoading } = useQuery({
-    queryKey: ['feedbacks'],
+    queryKey: ['feedbacks-recent'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('feedbacks').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('feedbacks')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
       if (error) throw error;
       return data;
     },
@@ -33,6 +38,7 @@ const FeedbackList = () => {
     },
     onSuccess: () => {
         toast.success('Análise iniciada! O feedback será atualizado em breve.');
+        queryClient.invalidateQueries({ queryKey: ['feedbacks-recent'] });
         queryClient.invalidateQueries({ queryKey: ['feedbacks'] });
     },
     onError: (error) => {
@@ -67,8 +73,18 @@ const FeedbackList = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Últimos Feedbacks</CardTitle>
-        <CardDescription>Visualize e analise os feedbacks recebidos.</CardDescription>
+        <div className="flex items-center justify-between">
+            <div>
+                <CardTitle>Últimos Feedbacks</CardTitle>
+                <CardDescription>Visualize os 5 feedbacks mais recentes.</CardDescription>
+            </div>
+            <Button asChild variant="outline" size="sm">
+                <Link to="/feedback">
+                    Ver relatório completo
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
@@ -101,6 +117,11 @@ const FeedbackList = () => {
             ))}
           </TableBody>
         </Table>
+        {!isLoading && (!feedbacks || feedbacks.length === 0) && (
+            <div className="text-center py-10 text-sm text-muted-foreground">
+                <p>Nenhum feedback para mostrar.</p>
+            </div>
+        )}
       </CardContent>
     </Card>
   );

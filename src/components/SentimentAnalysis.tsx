@@ -15,7 +15,7 @@ type Sentiment = keyof typeof SENTIMENT_CONFIG;
 
 export const SentimentAnalysis = () => {
   const { data: feedbacks, isLoading } = useQuery({
-    queryKey: ['feedbacks'], // Reusing the query from FeedbackList for caching
+    queryKey: ['sentiments'],
     queryFn: async () => {
       const { data, error } = await supabase.from('feedbacks').select('analysis');
       if (error) throw error;
