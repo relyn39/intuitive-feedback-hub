@@ -304,7 +304,7 @@ export type Database = {
     Enums: {
       ai_provider: "openai" | "google"
       feedback_priority: "low" | "medium" | "high" | "critical"
-      feedback_source: "jira" | "notion" | "zoho" | "manual"
+      feedback_source: "jira" | "notion" | "zoho" | "manual" | "zapier"
       feedback_status: "new" | "in_progress" | "resolved" | "closed"
       insight_severity: "info" | "warning" | "success" | "error"
       insight_type: "trend" | "alert" | "opportunity" | "other"
@@ -426,7 +426,7 @@ export const Constants = {
     Enums: {
       ai_provider: ["openai", "google"],
       feedback_priority: ["low", "medium", "high", "critical"],
-      feedback_source: ["jira", "notion", "zoho", "manual"],
+      feedback_source: ["jira", "notion", "zoho", "manual", "zapier"],
       feedback_status: ["new", "in_progress", "resolved", "closed"],
       insight_severity: ["info", "warning", "success", "error"],
       insight_type: ["trend", "alert", "opportunity", "other"],

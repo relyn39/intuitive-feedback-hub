@@ -10,6 +10,7 @@ import { IntegrationSource, IntegrationConfig, JiraConfig, NotionConfig, ZohoCon
 import { JiraConfigForm } from './config-forms/JiraConfigForm';
 import { NotionConfigForm } from './config-forms/NotionConfigForm';
 import { ZohoConfigForm } from './config-forms/ZohoConfigForm';
+import { ZapierConfigForm } from './config-forms/ZapierConfigForm';
 
 interface NewIntegrationDialogProps {
   loading: boolean;
@@ -40,6 +41,8 @@ export const NewIntegrationDialog: React.FC<NewIntegrationDialogProps> = ({ load
         return <NotionConfigForm config={newIntegration.config as NotionConfig} onConfigChange={(config) => setNewIntegration(prev => ({ ...prev, config }))} />;
       case 'zoho':
         return <ZohoConfigForm config={newIntegration.config as ZohoConfig} onConfigChange={(config) => setNewIntegration(prev => ({ ...prev, config }))} />;
+      case 'zapier':
+        return <ZapierConfigForm />;
       default:
         return null;
     }
@@ -69,6 +72,7 @@ export const NewIntegrationDialog: React.FC<NewIntegrationDialogProps> = ({ load
                 <SelectItem value="jira">Jira</SelectItem>
                 <SelectItem value="notion">Notion</SelectItem>
                 <SelectItem value="zoho">Zoho</SelectItem>
+                <SelectItem value="zapier">Zapier</SelectItem>
               </SelectContent>
             </Select>
           </div>

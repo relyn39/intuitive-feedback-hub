@@ -1,4 +1,3 @@
-
 export interface JiraConfig {
   jiraUrl?: string;
   email?: string;
@@ -17,11 +16,13 @@ export interface ZohoConfig {
   departmentId?: string;
 }
 
-export type IntegrationConfig = JiraConfig | NotionConfig | ZohoConfig;
+export interface ZapierConfig {}
+
+export type IntegrationConfig = JiraConfig | NotionConfig | ZohoConfig | ZapierConfig;
 
 export type IntegrationSyncFrequency = 'manual' | 'hourly' | 'twice_daily' | 'daily';
 
-export type IntegrationSource = 'jira' | 'notion' | 'zoho';
+export type IntegrationSource = 'jira' | 'notion' | 'zoho' | 'zapier';
 
 export interface Integration {
   id: string;

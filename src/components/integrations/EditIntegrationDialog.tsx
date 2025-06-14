@@ -48,23 +48,25 @@ export const EditIntegrationDialog: React.FC<EditIntegrationDialogProps> = ({ is
                 placeholder="Ex: Jira - Projeto Principal"
               />
             </div>
-            <div>
-              <Label htmlFor="edit-sync-frequency">Frequência de Sincronização</Label>
-              <Select
-                value={editableIntegration.sync_frequency}
-                onValueChange={(value: IntegrationSyncFrequency) => setEditableIntegration(prev => prev ? { ...prev, sync_frequency: value } : null)}
-              >
-                <SelectTrigger id="edit-sync-frequency">
-                  <SelectValue placeholder="Selecione a frequência" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">Manual</SelectItem>
-                  <SelectItem value="hourly">De hora em hora</SelectItem>
-                  <SelectItem value="twice_daily">Duas vezes ao dia</SelectItem>
-                  <SelectItem value="daily">Diariamente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {editableIntegration.source !== 'zapier' && (
+              <div>
+                <Label htmlFor="edit-sync-frequency">Frequência de Sincronização</Label>
+                <Select
+                  value={editableIntegration.sync_frequency}
+                  onValueChange={(value: IntegrationSyncFrequency) => setEditableIntegration(prev => prev ? { ...prev, sync_frequency: value } : null)}
+                >
+                  <SelectTrigger id="edit-sync-frequency">
+                    <SelectValue placeholder="Selecione a frequência" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">Manual</SelectItem>
+                    <SelectItem value="hourly">De hora em hora</SelectItem>
+                    <SelectItem value="twice_daily">Duas vezes ao dia</SelectItem>
+                    <SelectItem value="daily">Diariamente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         )}
         <DialogFooter>
