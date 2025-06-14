@@ -151,6 +151,39 @@ export type Database = {
           },
         ]
       }
+      insights: {
+        Row: {
+          action: string | null
+          created_at: string
+          description: string
+          id: string
+          severity: Database["public"]["Enums"]["insight_severity"]
+          title: string
+          type: Database["public"]["Enums"]["insight_type"]
+          user_id: string
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          severity: Database["public"]["Enums"]["insight_severity"]
+          title: string
+          type: Database["public"]["Enums"]["insight_type"]
+          user_id: string
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          severity?: Database["public"]["Enums"]["insight_severity"]
+          title?: string
+          type?: Database["public"]["Enums"]["insight_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           config: Json
@@ -267,6 +300,8 @@ export type Database = {
       feedback_priority: "low" | "medium" | "high" | "critical"
       feedback_source: "jira" | "notion" | "zoho" | "manual"
       feedback_status: "new" | "in_progress" | "resolved" | "closed"
+      insight_severity: "info" | "warning" | "success" | "error"
+      insight_type: "trend" | "alert" | "opportunity" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -386,6 +421,8 @@ export const Constants = {
       feedback_priority: ["low", "medium", "high", "critical"],
       feedback_source: ["jira", "notion", "zoho", "manual"],
       feedback_status: ["new", "in_progress", "resolved", "closed"],
+      insight_severity: ["info", "warning", "success", "error"],
+      insight_type: ["trend", "alert", "opportunity", "other"],
     },
   },
 } as const
