@@ -12,11 +12,31 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Play, Settings, Plus, Activity } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+interface JiraConfig {
+  jiraUrl?: string;
+  email?: string;
+  apiToken?: string;
+  jql?: string;
+}
+
+interface NotionConfig {
+  apiToken?: string;
+  databaseId?: string;
+}
+
+interface ZohoConfig {
+  accessToken?: string;
+  orgId?: string;
+  departmentId?: string;
+}
+
+type IntegrationConfig = JiraConfig | NotionConfig | ZohoConfig;
+
 interface Integration {
   id: string;
   source: 'jira' | 'notion' | 'zoho';
   name: string;
-  config: any;
+  config: IntegrationConfig;
   is_active: boolean;
   created_at: string;
 }
@@ -42,7 +62,7 @@ export const IntegrationsManager = () => {
   const [newIntegration, setNewIntegration] = useState({
     source: '' as 'jira' | 'notion' | 'zoho',
     name: '',
-    config: {}
+    config: {} as IntegrationConfig
   });
 
   useEffect(() => {
@@ -182,6 +202,7 @@ export const IntegrationsManager = () => {
   const renderConfigForm = () => {
     switch (newIntegration.source) {
       case 'jira':
+        const jiraConfig = newIntegration.config as JiraConfig;
         return (
           <div className="space-y-4">
             <div>
@@ -189,10 +210,10 @@ export const IntegrationsManager = () => {
               <Input
                 id="jiraUrl"
                 placeholder="https://yourcompany.atlassian.net"
-                value={newIntegration.config.jiraUrl || ''}
+                value={jiraConfig.jiraUrl || ''}
                 onChange={(e) => setNewIntegration(prev => ({
                   ...prev,
-                  config: { ...prev.config, jiraUrl: e.target.value }
+                  config: { ...prev.config, jiraUrl: e.target.value } as JiraConfig
                 }))}
               />
             </div>
@@ -201,10 +222,10 @@ export const IntegrationsManager = () => {
               <Input
                 id="email"
                 type="email"
-                value={newIntegration.config.email || ''}
+                value={jiraConfig.email || ''}
                 onChange={(e) => setNewIntegration(prev => ({
                   ...prev,
-                  config: { ...prev.config, email: e.target.value }
+                  config: { ...prev.config, email: e.target.value } as JiraConfig
                 }))}
               />
             </div>
@@ -213,10 +234,10 @@ export const IntegrationsManager = () => {
               <Input
                 id="apiToken"
                 type="password"
-                value={newIntegration.config.apiToken || ''}
+                value={jiraConfig.apiToken || ''}
                 onChange={(e) => setNewIntegration(prev => ({
                   ...prev,
-                  config: { ...prev.config, apiToken: e.target.value }
+                  config: { ...prev.config, apiToken: e.target.value } as JiraConfig
                 }))}
               />
             </div>
@@ -225,10 +246,10 @@ export const IntegrationsManager = () => {
               <Input
                 id="jql"
                 placeholder="project = PROJ ORDER BY updated DESC"
-                value={newIntegration.config.jql || ''}
+                value={jiraConfig.jql || ''}
                 onChange={(e) => setNewIntegration(prev => ({
                   ...prev,
-                  config: { ...prev.config, jql: e.target.value }
+                  config: { ...prev.config, jql: e.target.value } as JiraConfig
                 }))}
               />
             </div>
@@ -236,6 +257,7 @@ export const IntegrationsManager = () => {
         );
       
       case 'notion':
+        const notionConfig = newIntegration.config as NotionConfig;
         return (
           <div className="space-y-4">
             <div>
@@ -243,10 +265,10 @@ export const IntegrationsManager = () => {
               <Input
                 id="apiToken"
                 type="password"
-                value={newIntegration.config.apiToken || ''}
+                value={notionConfig.apiToken || ''}
                 onChange={(e) => setNewIntegration(prev => ({
                   ...prev,
-                  config: { ...prev.config, apiToken: e.target.value }
+                  config: { ...prev.config, apiToken: e.target.value } as NotionConfig
                 }))}
               />
             </div>
@@ -254,10 +276,10 @@ export const IntegrationsManager = () => {
               <Label htmlFor="databaseId">Database ID</Label>
               <Input
                 id="databaseId"
-                value={newIntegration.config.databaseId || ''}
+                value={notionConfig.databaseId || ''}
                 onChange={(e) => setNewIntegration(prev => ({
                   ...prev,
-                  config: { ...prev.config, databaseId: e.target.value }
+                  config: { ...prev.config, databaseId: e.target.value } as NotionConfig
                 }))}
               />
             </div>
@@ -265,6 +287,7 @@ export const IntegrationsManager = () => {
         );
       
       case 'zoho':
+        const zohoConfig = newIntegration.config as ZohoConfig;
         return (
           <div className="space-y-4">
             <div>
@@ -272,10 +295,10 @@ export const IntegrationsManager = () => {
               <Input
                 id="accessToken"
                 type="password"
-                value={newIntegration.config.accessToken || ''}
+                value={zohoConfig.accessToken || ''}
                 onChange={(e) => setNewIntegration(prev => ({
                   ...prev,
-                  config: { ...prev.config, accessToken: e.target.value }
+                  config: { ...prev.config, accessToken: e.target.value } as ZohoConfig
                 }))}
               />
             </div>
@@ -283,10 +306,10 @@ export const IntegrationsManager = () => {
               <Label htmlFor="orgId">Organization ID</Label>
               <Input
                 id="orgId"
-                value={newIntegration.config.orgId || ''}
+                value={zohoConfig.orgId || ''}
                 onChange={(e) => setNewIntegration(prev => ({
                   ...prev,
-                  config: { ...prev.config, orgId: e.target.value }
+                  config: { ...prev.config, orgId: e.target.value } as ZohoConfig
                 }))}
               />
             </div>
@@ -294,10 +317,10 @@ export const IntegrationsManager = () => {
               <Label htmlFor="departmentId">Department ID</Label>
               <Input
                 id="departmentId"
-                value={newIntegration.config.departmentId || ''}
+                value={zohoConfig.departmentId || ''}
                 onChange={(e) => setNewIntegration(prev => ({
                   ...prev,
-                  config: { ...prev.config, departmentId: e.target.value }
+                  config: { ...prev.config, departmentId: e.target.value } as ZohoConfig
                 }))}
               />
             </div>
@@ -333,7 +356,7 @@ export const IntegrationsManager = () => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="source">Plataforma</Label>
-                <Select onValueChange={(value: any) => setNewIntegration(prev => ({ ...prev, source: value }))}>
+                <Select onValueChange={(value: any) => setNewIntegration(prev => ({ ...prev, source: value, config: {} }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma plataforma" />
                   </SelectTrigger>
