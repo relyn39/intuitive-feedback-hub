@@ -6,11 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Wand2, Loader2, ArrowLeft } from 'lucide-react';
+import { Wand2, Loader2, ArrowLeft, Plus, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tables, Constants } from '@/integrations/supabase/types';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { AddManualFeedback } from '@/components/AddManualFeedback';
+import { ImportFeedback } from '@/components/ImportFeedback';
 
 type Feedback = Tables<'feedbacks'>;
 
@@ -43,6 +52,8 @@ const FeedbackReport = () => {
     
     const [page, setPage] = useState(1);
     const [sourceFilter, setSourceFilter] = useState(source || 'all');
+    const [addManualOpen, setAddManualOpen] = useState(false);
+    const [importOpen, setImportOpen] = useState(false);
 
     useEffect(() => {
         setSourceFilter(source || 'all');
@@ -118,20 +129,51 @@ const FeedbackReport = () => {
                                 <CardTitle>Relatório de Feedbacks</CardTitle>
                                 <CardDescription>Visualize, analise e gerencie todos os feedbacks recebidos.</CardDescription>
                             </div>
-                            <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                <Select value={sourceFilter} onValueChange={handleFilterChange}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Filtrar por fonte" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todas as fontes</SelectItem>
-                                        {Constants.public.Enums.feedback_source.map(sourceOpt => (
-                                            <SelectItem key={sourceOpt} value={sourceOpt}>
-                                                {sourceOpt.charAt(0).toUpperCase() + sourceOpt.slice(1)}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                            <div className="flex items-center gap-2">
+                                <div className="w-full sm:w-auto sm:min-w-[200px]">
+                                    <Select value={sourceFilter} onValueChange={handleFilterChange}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Filtrar por fonte" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todas as fontes</SelectItem>
+                                            {Constants.public.Enums.feedback_source.map(sourceOpt => (
+                                                <SelectItem key={sourceOpt} value={sourceOpt}>
+                                                    {sourceOpt.charAt(0).toUpperCase() + sourceOpt.slice(1)}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <Dialog open={addManualOpen} onOpenChange={setAddManualOpen}>
+                                    <DialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Adicionar
+                                    </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                    <DialogHeader>
+                                        <DialogTitle>Adicionar Feedback Manualmente</DialogTitle>
+                                    </DialogHeader>
+                                    <AddManualFeedback setOpen={setAddManualOpen} />
+                                    </DialogContent>
+                                </Dialog>
+
+                                <Dialog open={importOpen} onOpenChange={setImportOpen}>
+                                    <DialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Importar
+                                    </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                    <DialogHeader>
+                                        <DialogTitle>Importar Feedbacks de CSV</DialogTitle>
+                                    </DialogHeader>
+                                    <ImportFeedback setOpen={setImportOpen} />
+                                    </DialogContent>
+                                </Dialog>
                             </div>
                         </div>
                     </CardHeader>

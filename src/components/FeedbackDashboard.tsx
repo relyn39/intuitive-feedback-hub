@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MetricsOverview } from './MetricsOverview';
 import { SentimentAnalysis } from './SentimentAnalysis';
@@ -10,23 +9,12 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, Upload } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { AddManualFeedback } from './AddManualFeedback';
-import { ImportFeedback } from './ImportFeedback';
+import { Loader2 } from 'lucide-react';
 
 export const FeedbackDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [addManualOpen, setAddManualOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
 
   const handleUpdate = async () => {
     setIsUpdating(true);
@@ -98,36 +86,6 @@ export const FeedbackDashboard = () => {
           <p className="text-gray-600 mt-1">Análise inteligente de feedback dos usuários em tempo real</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Dialog open={addManualOpen} onOpenChange={setAddManualOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Adicionar Feedback Manualmente</DialogTitle>
-              </DialogHeader>
-              <AddManualFeedback setOpen={setAddManualOpen} />
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={importOpen} onOpenChange={setImportOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Upload className="mr-2 h-4 w-4" />
-                Importar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Importar Feedbacks de CSV</DialogTitle>
-              </DialogHeader>
-              <ImportFeedback setOpen={setImportOpen} />
-            </DialogContent>
-          </Dialog>
-
           <Button
             onClick={handleUpdate}
             disabled={isUpdating}
