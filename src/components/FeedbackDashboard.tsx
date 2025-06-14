@@ -10,12 +10,23 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Upload } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { AddManualFeedback } from './AddManualFeedback';
+import { ImportFeedback } from './ImportFeedback';
 
 export const FeedbackDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [addManualOpen, setAddManualOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const handleUpdate = async () => {
     setIsUpdating(true);
@@ -81,12 +92,42 @@ export const FeedbackDashboard = () => {
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard de Feedback</h1>
           <p className="text-gray-600 mt-1">Análise inteligente de feedback dos usuários em tempo real</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex items-center space-x-2">
+          <Dialog open={addManualOpen} onOpenChange={setAddManualOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Adicionar Feedback Manualmente</DialogTitle>
+              </DialogHeader>
+              <AddManualFeedback setOpen={setAddManualOpen} />
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={importOpen} onOpenChange={setImportOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Importar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Importar Feedbacks de CSV</DialogTitle>
+              </DialogHeader>
+              <ImportFeedback setOpen={setImportOpen} />
+            </DialogContent>
+          </Dialog>
+
           <Button
             onClick={handleUpdate}
             disabled={isUpdating}
@@ -100,9 +141,6 @@ export const FeedbackDashboard = () => {
             ) : (
               'Atualizar Dados'
             )}
-          </Button>
-          <Button variant="outline" className="border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-            Exportar Relatório
           </Button>
         </div>
       </div>
