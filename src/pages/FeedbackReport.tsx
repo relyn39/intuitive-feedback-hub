@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Wand2, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tables, Constants } from '@/integrations/supabase/types';
-import { Link } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Feedback = Tables<'feedbacks'>;
@@ -37,8 +38,16 @@ const renderAnalysis = (analysis: any) => {
 
 const FeedbackReport = () => {
     const queryClient = useQueryClient();
+    const { source } = useParams<{ source?: string }>();
+    const navigate = useNavigate();
+    
     const [page, setPage] = useState(1);
-    const [sourceFilter, setSourceFilter] = useState('all');
+    const [sourceFilter, setSourceFilter] = useState(source || 'all');
+
+    useEffect(() => {
+        setSourceFilter(source || 'all');
+        setPage(1);
+    }, [source]);
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ['feedbacks', page, ITEMS_PER_PAGE, sourceFilter],
@@ -83,6 +92,14 @@ const FeedbackReport = () => {
     const totalCount = data?.count ?? 0;
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
+    const handleFilterChange = (value: string) => {
+        if (value === 'all') {
+            navigate('/feedback');
+        } else {
+            navigate(`/feedback/${value}`);
+        }
+    };
+
     return (
         <div className="flex flex-col h-full">
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background">
@@ -102,18 +119,15 @@ const FeedbackReport = () => {
                                 <CardDescription>Visualize, analise e gerencie todos os feedbacks recebidos.</CardDescription>
                             </div>
                             <div className="w-full sm:w-auto sm:min-w-[200px]">
-                                <Select value={sourceFilter} onValueChange={(value) => {
-                                    setSourceFilter(value);
-                                    setPage(1);
-                                }}>
+                                <Select value={sourceFilter} onValueChange={handleFilterChange}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Filtrar por fonte" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">Todas as fontes</SelectItem>
-                                        {Constants.public.Enums.feedback_source.map(source => (
-                                            <SelectItem key={source} value={source}>
-                                                {source.charAt(0).toUpperCase() + source.slice(1)}
+                                        {Constants.public.Enums.feedback_source.map(sourceOpt => (
+                                            <SelectItem key={sourceOpt} value={sourceOpt}>
+                                                {sourceOpt.charAt(0).toUpperCase() + sourceOpt.slice(1)}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

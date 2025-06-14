@@ -1,7 +1,8 @@
 
-import { Calendar, Home, Settings, Database, BarChart3, BrainCircuit, Users, LogOut } from "lucide-react"
+import { Home, Settings, Database, BarChart3, BrainCircuit, Users, LogOut } from "lucide-react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
+import { Constants } from "@/integrations/supabase/types"
 
 import {
   Sidebar,
@@ -24,6 +25,18 @@ const items = [
     title: "Feedback",
     url: "/feedback",
     icon: BarChart3,
+    submenu: [
+      {
+        title: "Todos",
+        url: "/feedback",
+        icon: BarChart3,
+      },
+      ...Constants.public.Enums.feedback_source.map(source => ({
+        title: source.charAt(0).toUpperCase() + source.slice(1),
+        url: `/feedback/${source}`,
+        icon: Database,
+      }))
+    ]
   },
   {
     title: "Configurações",

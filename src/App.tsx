@@ -60,6 +60,7 @@ const App = () => {
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Navigate to="/" replace />} />
                     <Route path="/feedback" element={<FeedbackReport />} />
+                    <Route path="/feedback/:source" element={<FeedbackReport />} />
                     <Route path="/settings" element={<Settings />}>
                       <Route path="integrations" element={<SettingsIntegrations />} />
                       <Route path="ai" element={<SettingsAi />} />
