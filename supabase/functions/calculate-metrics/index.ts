@@ -2,7 +2,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { subDays, startOfDay } from 'https://deno.land/x/date_fns@v2.22.1/index.js';
+import { subDays } from 'https://deno.land/x/date_fns@v2.22.1/subDays/index.js';
+import { startOfDay } from 'https://deno.land/x/date_fns@v2.22.1/startOfDay/index.js';
 
 const calculateChange = (current: number, previous: number): number => {
     if (previous === 0) {
