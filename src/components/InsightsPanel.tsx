@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Lightbulb, TrendingUp, AlertCircle, Target, Loader2, Wand2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -96,10 +95,10 @@ export const InsightsPanel = () => {
         </div>
       )}
 
-      {error && (
-        <div className="text-center text-red-500 py-8">
-          <p>Ocorreu um erro ao carregar os insights.</p>
-          <p className="text-sm">{error.message}</p>
+      {!isLoading && (error || !insights || insights.length === 0) && (
+        <div className="text-center py-16">
+            <p className="text-gray-500 font-medium">Nenhum insight para exibir.</p>
+            <p className="text-sm text-gray-400 mt-2">Clique em "Gerar Novos Insights" para começar.</p>
         </div>
       )}
 
@@ -131,13 +130,6 @@ export const InsightsPanel = () => {
               </div>
             );
           })}
-        </div>
-      )}
-      
-      {!isLoading && !error && (!insights || insights.length === 0) && (
-        <div className="text-center py-16">
-            <p className="text-gray-500 font-medium">Nenhum insight gerado ainda.</p>
-            <p className="text-sm text-gray-400 mt-2">Clique em "Gerar Novos Insights" para começar.</p>
         </div>
       )}
     </div>

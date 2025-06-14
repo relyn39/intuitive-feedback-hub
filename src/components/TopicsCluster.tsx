@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Hash, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -51,20 +50,13 @@ export const TopicsCluster = () => {
                     Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)
                 )}
 
-                {!isLoading && isError && (
+                {!isLoading && (isError || !topics || topics.length === 0) && (
                     <div className="text-center py-10">
-                        <p className="text-red-600">Ocorreu um erro ao carregar os tópicos.</p>
-                        <p className="text-sm text-gray-500 mt-1">{error?.message}</p>
+                        <p className="text-gray-600">Não há tópicos para serem exibidos.</p>
+                        <p className="text-sm text-gray-500 mt-1">Analise mais feedbacks para ver os tópicos discutidos aqui.</p>
                     </div>
                 )}
                 
-                {!isLoading && !isError && topics && topics.length === 0 && (
-                    <div className="text-center py-10">
-                         <p className="text-gray-600">Não há dados suficientes para gerar tópicos.</p>
-                        <p className="text-sm text-gray-500 mt-1">Analise mais feedbacks para ver os tópicos discutidos.</p>
-                    </div>
-                )}
-
                 {!isLoading && !isError && topics && topics.map((topic) => {
                     const sentimentColors = {
                         positive: 'bg-green-50 border-green-200',

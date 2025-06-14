@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TrendingUp, TrendingDown, Star, AlertTriangle, Package } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -91,9 +90,9 @@ export const MetricsOverview = () => {
   if (isError) {
      return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="col-span-full bg-red-50 text-red-700 p-4 rounded-lg text-center">
-                <p className="font-semibold">Ocorreu um erro ao carregar as métricas</p>
-                <p className="text-sm">{error?.message}</p>
+            <div className="col-span-full text-center py-10 bg-white rounded-xl shadow-sm border border-gray-100">
+                <p className="text-gray-600">Não há dados para serem exibidos.</p>
+                <p className="text-sm text-gray-500 mt-1">Tente atualizar os dados ou verifique suas integrações.</p>
             </div>
         </div>
      );
