@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,8 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Wand2, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { Tables } from '@/integrations/supabase/types';
+import { Tables, Constants } from '@/integrations/supabase/types';
 import { Link } from 'react-router-dom';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Feedback = Tables<'feedbacks'>;
 
@@ -38,18 +38,25 @@ const renderAnalysis = (analysis: any) => {
 const FeedbackReport = () => {
     const queryClient = useQueryClient();
     const [page, setPage] = useState(1);
+    const [sourceFilter, setSourceFilter] = useState('all');
 
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['feedbacks', page, ITEMS_PER_PAGE],
+        queryKey: ['feedbacks', page, ITEMS_PER_PAGE, sourceFilter],
         queryFn: async () => {
             const from = (page - 1) * ITEMS_PER_PAGE;
             const to = from + ITEMS_PER_PAGE - 1;
 
-            const { data, error, count } = await supabase
+            let query = supabase
                 .from('feedbacks')
                 .select('*', { count: 'exact' })
                 .order('created_at', { ascending: false })
                 .range(from, to);
+
+            if (sourceFilter !== 'all') {
+                query = query.eq('source', sourceFilter);
+            }
+
+            const { data, error, count } = await query;
 
             if (error) throw error;
             return { feedbacks: data, count };
@@ -89,8 +96,30 @@ const FeedbackReport = () => {
             <main className="flex-1 p-6 space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Relatório de Feedbacks</CardTitle>
-                        <CardDescription>Visualize, analise e gerencie todos os feedbacks recebidos.</CardDescription>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <CardTitle>Relatório de Feedbacks</CardTitle>
+                                <CardDescription>Visualize, analise e gerencie todos os feedbacks recebidos.</CardDescription>
+                            </div>
+                            <div className="w-full sm:w-auto sm:min-w-[200px]">
+                                <Select value={sourceFilter} onValueChange={(value) => {
+                                    setSourceFilter(value);
+                                    setPage(1);
+                                }}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Filtrar por fonte" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todas as fontes</SelectItem>
+                                        {Constants.public.Enums.feedback_source.map(source => (
+                                            <SelectItem key={source} value={source}>
+                                                {source.charAt(0).toUpperCase() + source.slice(1)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         {isLoading ? (
