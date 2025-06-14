@@ -103,7 +103,7 @@ export const AiManager = () => {
           <AlertDescription>
             Para usar a análise de IA, você precisa adicionar sua chave de API da OpenAI.
             Ela será armazenada de forma segura como um segredo no Supabase.
-            Clique no botão no chat para adicioná-la.
+            Para alterar sua chave de API, solicite ao assistente de IA no chat.
           </AlertDescription>
         </Alert>
         <Form {...form}>

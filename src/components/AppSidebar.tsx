@@ -1,5 +1,5 @@
 
-import { Calendar, Home, Settings, Database, BarChart3 } from "lucide-react"
+import { Calendar, Home, Settings, Database, BarChart3, BrainCircuit } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 
 import {
@@ -33,6 +33,11 @@ const items = [
         title: "Integrações",
         url: "/settings/integrations",
         icon: Database,
+      },
+      {
+        title: "Inteligência Artificial",
+        url: "/settings/ai",
+        icon: BrainCircuit,
       },
     ]
   },
