@@ -190,8 +190,10 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
+          last_synced_at: string | null
           name: string
           source: Database["public"]["Enums"]["feedback_source"]
+          sync_frequency: Database["public"]["Enums"]["integration_sync_frequency"]
           updated_at: string | null
           user_id: string
         }
@@ -200,8 +202,10 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          last_synced_at?: string | null
           name: string
           source: Database["public"]["Enums"]["feedback_source"]
+          sync_frequency?: Database["public"]["Enums"]["integration_sync_frequency"]
           updated_at?: string | null
           user_id: string
         }
@@ -210,8 +214,10 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          last_synced_at?: string | null
           name?: string
           source?: Database["public"]["Enums"]["feedback_source"]
+          sync_frequency?: Database["public"]["Enums"]["integration_sync_frequency"]
           updated_at?: string | null
           user_id?: string
         }
@@ -302,6 +308,7 @@ export type Database = {
       feedback_status: "new" | "in_progress" | "resolved" | "closed"
       insight_severity: "info" | "warning" | "success" | "error"
       insight_type: "trend" | "alert" | "opportunity" | "other"
+      integration_sync_frequency: "manual" | "hourly" | "twice_daily" | "daily"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -423,6 +430,7 @@ export const Constants = {
       feedback_status: ["new", "in_progress", "resolved", "closed"],
       insight_severity: ["info", "warning", "success", "error"],
       insight_type: ["trend", "alert", "opportunity", "other"],
+      integration_sync_frequency: ["manual", "hourly", "twice_daily", "daily"],
     },
   },
 } as const

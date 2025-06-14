@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Play, Settings, Plus, Activity } from 'lucide-react';
+import { Trash2, Play, Settings, Plus, Activity, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface JiraConfig {
@@ -31,6 +31,8 @@ interface ZohoConfig {
 
 type IntegrationConfig = JiraConfig | NotionConfig | ZohoConfig;
 
+type IntegrationSyncFrequency = 'manual' | 'hourly' | 'twice_daily' | 'daily';
+
 interface Integration {
   id: string;
   source: 'jira' | 'notion' | 'zoho';
@@ -38,6 +40,8 @@ interface Integration {
   config: IntegrationConfig;
   is_active: boolean;
   created_at: string;
+  sync_frequency: IntegrationSyncFrequency;
+  last_synced_at?: string;
 }
 
 interface SyncLog {
@@ -57,6 +61,9 @@ export const IntegrationsManager = () => {
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [newIntegration, setNewIntegration] = useState({
     source: '' as 'jira' | 'notion' | 'zoho',
@@ -84,7 +91,7 @@ export const IntegrationsManager = () => {
       return;
     }
 
-    setIntegrations(data || []);
+    setIntegrations(data as Integration[] || []);
   };
 
   const fetchSyncLogs = async () => {
@@ -141,6 +148,36 @@ export const IntegrationsManager = () => {
     setLoading(false);
   };
 
+  const updateIntegration = async () => {
+    if (!editingIntegration) return;
+
+    setLoading(true);
+    const { error } = await supabase
+      .from('integrations')
+      .update({
+        name: editingIntegration.name,
+        sync_frequency: editingIntegration.sync_frequency,
+      })
+      .eq('id', editingIntegration.id);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao atualizar integração",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Sucesso",
+        description: "Integração atualizada com sucesso"
+      });
+      setIsEditModalOpen(false);
+      setEditingIntegration(null);
+      fetchIntegrations();
+    }
+    setLoading(false);
+  };
+
   const deleteIntegration = async (id: string) => {
     const { error } = await supabase
       .from('integrations')
@@ -187,6 +224,7 @@ export const IntegrationsManager = () => {
       });
       
       fetchSyncLogs();
+      fetchIntegrations(); // Refresh integrations to show new last_synced_at
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -197,6 +235,11 @@ export const IntegrationsManager = () => {
       setSyncing(null);
     }
   };
+
+  const handleEditClick = (integration: Integration) => {
+    setEditingIntegration(integration);
+    setIsEditModalOpen(true);
+  }
 
   const renderConfigForm = () => {
     switch (newIntegration.source) {
@@ -382,6 +425,53 @@ export const IntegrationsManager = () => {
         </Dialog>
       </div>
 
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Integração</DialogTitle>
+            <DialogDescription>
+              Atualize o nome e a frequência de sincronização.
+            </DialogDescription>
+          </DialogHeader>
+          {editingIntegration && (
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="edit-name">Nome da Integração</Label>
+                <Input
+                  id="edit-name"
+                  value={editingIntegration.name}
+                  onChange={(e) => setEditingIntegration(prev => prev ? { ...prev, name: e.target.value } : null)}
+                  placeholder="Ex: Jira - Projeto Principal"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-sync-frequency">Frequência de Sincronização</Label>
+                <Select 
+                  value={editingIntegration.sync_frequency} 
+                  onValueChange={(value: IntegrationSyncFrequency) => setEditingIntegration(prev => prev ? { ...prev, sync_frequency: value } : null)}
+                >
+                  <SelectTrigger id="edit-sync-frequency">
+                    <SelectValue placeholder="Selecione a frequência" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">Manual</SelectItem>
+                    <SelectItem value="hourly">De hora em hora</SelectItem>
+                    <SelectItem value="twice_daily">Duas vezes ao dia</SelectItem>
+                    <SelectItem value="daily">Diariamente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancelar</Button>
+            <Button onClick={updateIntegration} disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Tabs defaultValue="integrations" className="w-full">
         <TabsList>
           <TabsTrigger value="integrations">Integrações</TabsTrigger>
@@ -407,7 +497,14 @@ export const IntegrationsManager = () => {
                     </Badge>
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
+                      onClick={() => handleEditClick(integration)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
                       onClick={() => syncIntegration(integration)}
                       disabled={syncing === integration.id}
                     >
@@ -418,8 +515,8 @@ export const IntegrationsManager = () => {
                       )}
                     </Button>
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="destructive"
+                      size="icon"
                       onClick={() => deleteIntegration(integration.id)}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -427,9 +524,17 @@ export const IntegrationsManager = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Criado em {new Date(integration.created_at).toLocaleDateString('pt-BR')}
-                  </p>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p>
+                      Frequência de Sincronização: <span className="font-medium capitalize">{integration.sync_frequency.replace('_', ' ')}</span>
+                    </p>
+                    <p>
+                      Última Sincronização: <span className="font-medium">{integration.last_synced_at ? new Date(integration.last_synced_at).toLocaleString('pt-BR') : 'Nunca'}</span>
+                    </p>
+                    <p>
+                      Criado em {new Date(integration.created_at).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             ))}

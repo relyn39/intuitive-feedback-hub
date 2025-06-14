@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
@@ -24,36 +23,50 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  const supabaseAdmin = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
+
   try {
+    const authHeader = req.headers.get('Authorization')!
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      { global: { headers: { Authorization: authHeader } } }
     )
-
     const { data: { user } } = await supabaseClient.auth.getUser()
-    if (!user) {
-      throw new Error('Unauthorized')
-    }
 
     const { integrationId } = await req.json()
-
-    // Get integration config
-    const { data: integration, error: integrationError } = await supabaseClient
-      .from('integrations')
-      .select('*')
-      .eq('id', integrationId)
-      .eq('user_id', user.id)
-      .single()
-
-    if (integrationError || !integration) {
-      throw new Error('Integration not found')
+    if (!integrationId) {
+      throw new Error('integrationId is required')
+    }
+    
+    let integration
+    if (user) {
+      const { data, error } = await supabaseClient
+        .from('integrations')
+        .select('*')
+        .eq('id', integrationId)
+        .eq('user_id', user.id)
+        .single()
+      if (error || !data) throw new Error('Integration not found or permission denied')
+      integration = data
+    } else {
+      const { data, error } = await supabaseAdmin
+        .from('integrations')
+        .select('*')
+        .eq('id', integrationId)
+        .single()
+      if (error || !data) throw new Error('Integration not found for automated sync')
+      integration = data
     }
 
     const { accessToken, orgId, departmentId } = integration.config as any
+    const userId = integration.user_id
 
     // Create sync log
-    const { data: syncLog, error: syncLogError } = await supabaseClient
+    const { data: syncLog, error: syncLogError } = await supabaseAdmin
       .from('sync_logs')
       .insert({
         integration_id: integrationId,
@@ -91,7 +104,7 @@ serve(async (req) => {
 
       for (const ticket of tickets) {
         const feedbackData = {
-          user_id: user.id,
+          user_id: userId,
           integration_id: integrationId,
           source: 'zoho',
           external_id: ticket.id,
@@ -111,24 +124,24 @@ serve(async (req) => {
         }
 
         // Check if feedback already exists
-        const { data: existingFeedback } = await supabaseClient
+        const { data: existingFeedback } = await supabaseAdmin
           .from('feedbacks')
           .select('id')
           .eq('external_id', ticket.id)
           .eq('source', 'zoho')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .single()
 
         if (existingFeedback) {
           // Update existing feedback
-          await supabaseClient
+          await supabaseAdmin
             .from('feedbacks')
             .update(feedbackData)
             .eq('id', existingFeedback.id)
           itemsUpdated++
         } else {
           // Create new feedback
-          await supabaseClient
+          await supabaseAdmin
             .from('feedbacks')
             .insert(feedbackData)
           itemsCreated++
@@ -136,7 +149,7 @@ serve(async (req) => {
       }
 
       // Update sync log
-      await supabaseClient
+      await supabaseAdmin
         .from('sync_logs')
         .update({
           status: 'success',
@@ -146,6 +159,12 @@ serve(async (req) => {
           completed_at: new Date().toISOString()
         })
         .eq('id', syncLog.id)
+
+      // Update last_synced_at on the integration
+      await supabaseAdmin
+        .from('integrations')
+        .update({ last_synced_at: new Date().toISOString() })
+        .eq('id', integration.id)
 
       return new Response(
         JSON.stringify({
@@ -159,7 +178,7 @@ serve(async (req) => {
 
     } catch (error) {
       // Update sync log with error
-      await supabaseClient
+      await supabaseAdmin
         .from('sync_logs')
         .update({
           status: 'error',

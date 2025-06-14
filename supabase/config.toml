@@ -1,0 +1,3 @@
+
+[functions.sync-scheduler]
+verify_jwt = false
