@@ -15,7 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 
 const aiConfigSchema = z.object({
-  provider: z.enum(['openai']),
+  provider: z.enum(['openai', 'google']),
   model: z.string().min(1, 'O modelo é obrigatório.'),
 });
 
@@ -78,12 +78,14 @@ export const AiManager = () => {
       model: 'gpt-4o-mini',
     },
   });
+
+  const watchedProvider = form.watch('provider');
   
   useEffect(() => {
     if (config) {
       form.reset({
-        provider: config.provider as 'openai',
-        model: config.model || 'gpt-4o-mini',
+        provider: config.provider as 'openai' | 'google',
+        model: config.model || (config.provider === 'openai' ? 'gpt-4o-mini' : ''),
       });
     }
   }, [config, form]);
@@ -99,11 +101,11 @@ export const AiManager = () => {
       <CardContent>
         <Alert className="mb-6">
           <Terminal className="h-4 w-4" />
-          <AlertTitle>Conecte sua conta OpenAI</AlertTitle>
+          <AlertTitle>Conecte seu provedor de IA</AlertTitle>
           <AlertDescription>
-            Para usar a análise de IA, você precisa adicionar sua chave de API da OpenAI.
+            Para usar a análise de IA, você precisa adicionar sua chave de API do provedor (OpenAI ou Google).
             Ela será armazenada de forma segura como um segredo no Supabase.
-            Para alterar sua chave de API, solicite ao assistente de IA no chat.
+            Para adicionar ou alterar sua chave de API, solicite ao assistente de IA no chat.
           </AlertDescription>
         </Alert>
         <Form {...form}>
@@ -114,7 +116,7 @@ export const AiManager = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Provedor</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um provedor" />
@@ -122,10 +124,11 @@ export const AiManager = () => {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="google">Google</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Atualmente, apenas OpenAI é suportado.
+                    O provedor que será usado para a análise de IA.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -138,10 +141,12 @@ export const AiManager = () => {
                 <FormItem>
                   <FormLabel>Modelo</FormLabel>
                   <FormControl>
-                    <Input placeholder="ex: gpt-4o-mini" {...field} />
+                    <Input placeholder={watchedProvider === 'openai' ? 'ex: gpt-4o-mini' : 'ex: gemini-1.5-pro-latest'} {...field} />
                   </FormControl>
                   <FormDescription>
-                    O modelo da OpenAI que será usado para a análise.
+                    {watchedProvider === 'openai'
+                      ? 'O modelo da OpenAI que será usado para a análise.'
+                      : 'O modelo do Google que será usado para a análise.'}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
