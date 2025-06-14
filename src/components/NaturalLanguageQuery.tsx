@@ -1,6 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, Sparkles, Clock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const sampleQueries = [
   "Quais foram os problemas mais reportados no módulo de pagamento este mês?",
@@ -24,22 +26,71 @@ export const NaturalLanguageQuery = () => {
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState('');
+  const [lastQueryTime, setLastQueryTime] = useState<Date | null>(null);
+  const [timeAgo, setTimeAgo] = useState('');
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const formatTimeAgo = () => {
+      if (!lastQueryTime) return;
+      const seconds = Math.floor((new Date().getTime() - lastQueryTime.getTime()) / 1000);
+      if (seconds < 5) {
+        setTimeAgo('agora');
+      } else if (seconds < 60) {
+        setTimeAgo(`há ${seconds} seg`);
+      } else {
+        const minutes = Math.floor(seconds / 60);
+        setTimeAgo(`há ${minutes} min`);
+      }
+    };
+
+    if (lastQueryTime) {
+      formatTimeAgo();
+      const interval = setInterval(formatTimeAgo, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [lastQueryTime]);
+
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim() || isLoading) return;
 
     setIsLoading(true);
-    
-    // Simulate AI processing
-    setTimeout(() => {
-      const mockResponse = mockResponses.find(r => 
-        query.toLowerCase().includes(r.query)
-      )?.response || "Analisando seus dados... Encontrei insights relevantes sobre essa consulta. Os dados mostram padrões interessantes que podem ajudar na tomada de decisão.";
+    setResponse('');
+    setLastQueryTime(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado.');
+      }
+
+      const { data, error } = await supabase.functions.invoke('natural-language-query', {
+        body: { query, user_id: user.id },
+      });
+
+      if (error) {
+        throw new Error(`Erro ao consultar a IA: ${error.message}`);
+      }
       
-      setResponse(mockResponse);
+      if (data.error) {
+        throw new Error(`Erro da IA: ${data.error}`);
+      }
+
+      setResponse(data.response);
+      setLastQueryTime(new Date());
+
+    } catch (error: any) {
+      toast({
+        title: "Erro na Consulta",
+        description: error.message || "Não foi possível obter uma resposta da IA.",
+        variant: "destructive",
+      });
+      setResponse('');
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const handleSampleQuery = (sample: string) => {
@@ -96,10 +147,14 @@ export const NaturalLanguageQuery = () => {
           <div className="flex items-center space-x-2 mb-2">
             <Sparkles className="w-4 h-4 text-purple-600" />
             <span className="text-sm font-medium text-purple-900">Resposta da IA</span>
-            <Clock className="w-3 h-3 text-purple-600" />
-            <span className="text-xs text-purple-700">Agora</span>
+            {lastQueryTime && (
+              <>
+                <Clock className="w-3 h-3 text-purple-600" />
+                <span className="text-xs text-purple-700">{timeAgo}</span>
+              </>
+            )}
           </div>
-          <p className="text-sm text-gray-800 leading-relaxed">{response}</p>
+          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{response}</p>
         </div>
       )}
     </div>
