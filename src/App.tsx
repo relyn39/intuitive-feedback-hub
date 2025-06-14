@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -15,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import FeedbackReport from "./pages/FeedbackReport";
 import AuthPage from "./pages/AuthPage";
 import SettingsUsers from "./pages/SettingsUsers";
+import TopicsAnalysis from "./pages/TopicsAnalysis"; // Import the new page
 import { supabase } from './integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 
@@ -61,6 +61,7 @@ const App = () => {
                     <Route path="/auth" element={<Navigate to="/" replace />} />
                     <Route path="/feedback" element={<FeedbackReport />} />
                     <Route path="/feedback/:source" element={<FeedbackReport />} />
+                    <Route path="/topics-analysis" element={<TopicsAnalysis />} />
                     <Route path="/settings" element={<Settings />}>
                       <Route path="integrations" element={<SettingsIntegrations />} />
                       <Route path="ai" element={<SettingsAi />} />

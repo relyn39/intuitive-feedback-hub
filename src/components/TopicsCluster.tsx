@@ -1,8 +1,9 @@
 import React from 'react';
-import { Hash, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { Hash, ArrowUp, ArrowDown, Minus, ArrowUpRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from 'react-router-dom';
 
 interface Topic {
   id: number;
@@ -40,9 +41,10 @@ export const TopicsCluster = () => {
                     <h3 className="text-lg font-semibold text-gray-900">Tópicos Mais Discutidos</h3>
                     <p className="text-sm text-gray-600">Clustering automático baseado em análise semântica</p>
                 </div>
-                <button className="text-sm text-blue-600 hover:text-blue-800 transition-colors">
-                    Ver análise completa →
-                </button>
+                <Link to="/topics-analysis" className="text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium flex items-center gap-1">
+                    Ver análise completa
+                    <ArrowUpRight className="h-3 w-3" />
+                </Link>
             </div>
 
             <div className="space-y-4">
