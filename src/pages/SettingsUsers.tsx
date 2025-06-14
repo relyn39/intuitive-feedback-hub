@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -13,7 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Pencil } from 'lucide-react';
+import { EditUserDialog } from '@/components/EditUserDialog';
 
 const fetchUsers = async () => {
   const { data, error } = await supabase.from('profiles').select('id, full_name, email, created_at');
@@ -23,8 +24,16 @@ const fetchUsers = async () => {
   return data;
 };
 
+type UserProfile = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  created_at: string;
+};
+
 const SettingsUsers = () => {
-  const { data: users, isLoading, error } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+  const { data: users, isLoading, error } = useQuery<UserProfile[]>({ queryKey: ['users'], queryFn: fetchUsers });
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
 
   return (
     <div className="space-y-6">
@@ -60,6 +69,7 @@ const SettingsUsers = () => {
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead className="hidden md:table-cell">Data de Cadastro</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -70,6 +80,12 @@ const SettingsUsers = () => {
                     <TableCell className="hidden md:table-cell">
                       {new Date(user.created_at).toLocaleDateString()}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm" onClick={() => setEditingUser(user)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -79,6 +95,18 @@ const SettingsUsers = () => {
           )}
         </CardContent>
       </Card>
+
+      {editingUser && (
+        <EditUserDialog
+          user={editingUser}
+          open={!!editingUser}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setEditingUser(null);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
