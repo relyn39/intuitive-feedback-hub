@@ -21,6 +21,7 @@ import { AddManualFeedback } from '@/components/AddManualFeedback';
 import { ImportFeedback } from '@/components/ImportFeedback';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ReviewInsightDialog, InsightFormData } from '@/components/ReviewInsightDialog';
 
 type Feedback = Tables<'feedbacks'>;
 
@@ -58,6 +59,7 @@ const FeedbackReport = () => {
     const [addManualOpen, setAddManualOpen] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
     const [selectedRows, setSelectedRows] = useState<string[]>([]);
+    const [insightToReview, setInsightToReview] = useState<InsightFormData | null>(null);
 
     useEffect(() => {
         setSourceFilter(source || 'all');
@@ -127,18 +129,38 @@ const FeedbackReport = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Usuário não autenticado.");
     
-            const { error } = await supabase.functions.invoke('generate-insight-from-selection', {
+            const { data, error } = await supabase.functions.invoke('generate-insight-from-selection', {
                 body: { feedback_ids: feedbackIds, user_id: user.id },
             });
             if (error) throw new Error(error.message);
+            return data;
         },
-        onSuccess: () => {
-            toast.success('Insight gerado com sucesso a partir da seleção!');
-            queryClient.invalidateQueries({ queryKey: ['insights'] });
+        onSuccess: (data) => {
+            toast.info('Insight preliminar gerado. Revise e aprove abaixo.');
+            setInsightToReview(data.insight);
             setSelectedRows([]);
         },
         onError: (error) => {
             toast.error(`Erro ao gerar insight: ${error.message}`);
+        }
+    });
+
+    const saveInsightMutation = useMutation({
+        mutationFn: async (insightData: InsightFormData) => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Usuário não autenticado.");
+    
+            const insightToInsert = { ...insightData, user_id: user.id };
+            const { error } = await supabase.from('insights').insert(insightToInsert);
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            toast.success('Insight salvo com sucesso!');
+            queryClient.invalidateQueries({ queryKey: ['insights'] });
+            setInsightToReview(null);
+        },
+        onError: (error: Error) => {
+            toast.error(`Erro ao salvar o insight: ${error.message}`);
         }
     });
 
@@ -162,6 +184,13 @@ const FeedbackReport = () => {
 
     return (
         <div className="flex flex-col h-full">
+            <ReviewInsightDialog
+                open={!!insightToReview}
+                onOpenChange={(open) => !open && setInsightToReview(null)}
+                insight={insightToReview}
+                onSave={(data) => saveInsightMutation.mutate(data)}
+                isSaving={saveInsightMutation.isPending}
+            />
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background">
                 <Button variant="outline" size="sm" asChild>
                     <Link to="/">

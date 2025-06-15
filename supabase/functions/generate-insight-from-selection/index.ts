@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
@@ -134,12 +133,8 @@ serve(async (req) => {
         throw new Error('A resposta da IA não continha um objeto de insight válido.');
     }
 
-    // 7. Save insight to DB
-    const insightToInsert = { ...insightData, user_id };
-    const { data: newInsight, error: insertError } = await supabaseAdmin.from('insights').insert(insightToInsert).select().single();
-    if (insertError) throw insertError;
-    
-    return new Response(JSON.stringify({ insight: newInsight }), {
+    // Return the generated insight data without saving it
+    return new Response(JSON.stringify({ insight: insightData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
