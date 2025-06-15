@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +16,7 @@ import { Terminal } from 'lucide-react';
 const aiConfigSchema = z.object({
   provider: z.enum(['openai', 'google']),
   model: z.string().min(1, 'O modelo é obrigatório.'),
+  api_key: z.string().optional(),
 });
 
 type AiConfigFormValues = z.infer<typeof aiConfigSchema>;
@@ -48,14 +48,27 @@ export const AiManager = () => {
   const mutation = useMutation({
     mutationFn: async (values: AiConfigFormValues) => {
         const userId = await getUserId();
+        
+        const dataToUpsert: {
+            user_id: string;
+            provider: 'openai' | 'google';
+            model: string;
+            updated_at: string;
+            api_key?: string;
+        } = { 
+            user_id: userId,
+            provider: values.provider,
+            model: values.model,
+            updated_at: new Date().toISOString()
+        };
+
+        if (values.api_key && values.api_key.trim() !== '') {
+            dataToUpsert.api_key = values.api_key;
+        }
+
         const { data, error } = await supabase
             .from('ai_configurations')
-            .upsert({ 
-                user_id: userId,
-                provider: values.provider,
-                model: values.model,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id' })
+            .upsert(dataToUpsert, { onConflict: 'user_id' })
             .select()
             .single();
 
@@ -65,6 +78,7 @@ export const AiManager = () => {
     onSuccess: () => {
       toast.success('Configuração de IA salva com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['aiConfig'] });
+      form.reset({ ...form.getValues(), api_key: '' });
     },
     onError: (error) => {
       toast.error('Erro ao salvar configuração: ' + error.message);
@@ -76,6 +90,7 @@ export const AiManager = () => {
     defaultValues: {
       provider: 'openai',
       model: 'gpt-4o-mini',
+      api_key: '',
     },
   });
 
@@ -86,6 +101,7 @@ export const AiManager = () => {
       form.reset({
         provider: config.provider as 'openai' | 'google',
         model: config.model || (config.provider === 'openai' ? 'gpt-4o-mini' : ''),
+        api_key: '', // Sempre manter o campo da chave em branco ao carregar
       });
     }
   }, [config, form]);
@@ -95,7 +111,7 @@ export const AiManager = () => {
       <CardHeader>
         <CardTitle>Configuração do Provedor de IA</CardTitle>
         <CardDescription>
-          Selecione o provedor e o modelo para análise de sentimentos e tópicos.
+          Selecione o provedor, o modelo e forneça sua chave de API.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -103,9 +119,9 @@ export const AiManager = () => {
           <Terminal className="h-4 w-4" />
           <AlertTitle>Conecte seu provedor de IA</AlertTitle>
           <AlertDescription>
-            Para usar a análise de IA, você precisa adicionar sua chave de API do provedor (OpenAI ou Google).
-            Ela será armazenada de forma segura como um segredo no Supabase.
-            Para adicionar ou alterar sua chave de API, solicite ao assistente de IA no chat.
+            Para usar a análise de IA, adicione sua chave de API do provedor (OpenAI ou Google) abaixo.
+            Sua chave é armazenada de forma segura e usada apenas para as análises da sua conta. 
+            Deixar o campo em branco manterá a chave existente.
           </AlertDescription>
         </Alert>
         <Form {...form}>
@@ -147,6 +163,22 @@ export const AiManager = () => {
                     {watchedProvider === 'openai'
                       ? 'O modelo da OpenAI que será usado para a análise.'
                       : 'O modelo do Google que será usado para a análise.'}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="api_key"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Chave de API (Opcional)</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••••••••••••••" {...field} autoComplete="new-password" />
+                  </FormControl>
+                  <FormDescription>
+                    Preencha apenas se desejar atualizar sua chave de API.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

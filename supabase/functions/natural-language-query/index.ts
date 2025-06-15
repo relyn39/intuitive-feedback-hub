@@ -2,20 +2,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // O JWT do usuário é verificado automaticamente pelo Supabase.
-    // Estamos pegando o corpo da requisição.
     const { query, user_id } = await req.json();
     if (!query) throw new Error('A consulta (query) é obrigatória.');
     if (!user_id) throw new Error('O user_id é obrigatório.');
-    if (!openAIApiKey) throw new Error('A chave da API da OpenAI não está configurada.');
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -27,8 +22,8 @@ serve(async (req) => {
       .from('feedbacks')
       .select('title, description, analysis')
       .eq('user_id', user_id)
-      .not('analysis', 'is', null) // Apenas feedbacks que foram analisados
-      .limit(100); // Limita para evitar prompts excessivamente grandes
+      .not('analysis', 'is', null)
+      .limit(100);
 
     if (feedbackError) throw feedbackError;
 
@@ -38,15 +33,22 @@ serve(async (req) => {
       });
     }
 
-    // 2. Busca a configuração de IA do usuário para obter o modelo
+    // 2. Busca a configuração de IA do usuário para obter o modelo e a chave
     const { data: aiConfig, error: configError } = await supabaseAdmin
         .from('ai_configurations')
-        .select('model')
+        .select('model, provider, api_key')
         .eq('user_id', user_id)
         .single();
     
     if (configError) throw configError;
     if (!aiConfig) throw new Error("Configuração de IA não encontrada para o usuário.");
+
+    if (aiConfig.provider !== 'openai') {
+      throw new Error(`O provedor de IA '${aiConfig.provider}' ainda não é suportado para esta funcionalidade.`);
+    }
+
+    const apiKey = aiConfig.api_key || Deno.env.get('OPENAI_API_KEY');
+    if (!apiKey) throw new Error('A chave da API da OpenAI não está configurada para este usuário nem no ambiente.');
 
     // 3. Formata os dados para o prompt
     const feedbackDataString = feedbacks.map(fb => {
@@ -75,7 +77,7 @@ serve(async (req) => {
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

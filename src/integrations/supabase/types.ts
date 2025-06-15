@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       ai_configurations: {
         Row: {
+          api_key: string | null
           created_at: string | null
           id: string
           is_active: boolean | null
@@ -20,6 +21,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          api_key?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -29,6 +31,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          api_key?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null
