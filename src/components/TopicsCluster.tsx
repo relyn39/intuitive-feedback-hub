@@ -32,7 +32,7 @@ const fetchLatestTopics = async () => {
         throw new Error(error.message);
     }
 
-    return data?.topics as Topic[] | null;
+    return data?.topics ?? null;
 };
 
 const analyzeNewTopics = async () => {
