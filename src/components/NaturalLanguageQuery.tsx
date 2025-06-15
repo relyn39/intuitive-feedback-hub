@@ -98,10 +98,10 @@ export const NaturalLanguageQuery = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div className="bg-card rounded-xl p-6 shadow-sm border">
       <div className="flex items-center space-x-2 mb-4">
         <Sparkles className="w-5 h-5 text-purple-600" />
-        <h3 className="text-lg font-semibold text-gray-900">Consulta em Linguagem Natural</h3>
+        <h3 className="text-lg font-semibold text-card-foreground">Consulta em Linguagem Natural</h3>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -110,7 +110,7 @@ export const NaturalLanguageQuery = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Faça uma pergunta sobre seus dados de feedback..."
-            className="w-full p-4 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full p-4 border bg-background text-foreground rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
             rows={3}
           />
           <button
@@ -128,13 +128,13 @@ export const NaturalLanguageQuery = () => {
       </form>
 
       <div className="mt-4 space-y-2">
-        <p className="text-sm text-gray-600 font-medium">Exemplos de consultas:</p>
+        <p className="text-sm text-muted-foreground font-medium">Exemplos de consultas:</p>
         <div className="flex flex-wrap gap-2">
           {sampleQueries.slice(0, 2).map((sample, index) => (
             <button
               key={index}
               onClick={() => handleSampleQuery(sample)}
-              className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+              className="text-xs px-3 py-1 bg-muted text-muted-foreground rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               {sample.length > 50 ? sample.substring(0, 50) + '...' : sample}
             </button>
@@ -143,18 +143,18 @@ export const NaturalLanguageQuery = () => {
       </div>
 
       {response && (
-        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+        <div className="mt-6 p-4 bg-accent rounded-lg border">
           <div className="flex items-center space-x-2 mb-2">
             <Sparkles className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-medium text-purple-900">Resposta da IA</span>
+            <span className="text-sm font-medium text-accent-foreground">Resposta da IA</span>
             {lastQueryTime && (
               <>
                 <Clock className="w-3 h-3 text-purple-600" />
-                <span className="text-xs text-purple-700">{timeAgo}</span>
+                <span className="text-xs text-accent-foreground/80">{timeAgo}</span>
               </>
             )}
           </div>
-          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">{response}</p>
+          <p className="text-sm text-accent-foreground/90 leading-relaxed whitespace-pre-wrap">{response}</p>
         </div>
       )}
     </div>
