@@ -1,120 +1,78 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { Integration, SyncLog, IntegrationSource, IntegrationConfig } from '@/components/integrations/types';
+import { Integration } from '@/components/integrations/types';
+import * as integrationService from '@/services/integrationService';
 
 export const useIntegrations = () => {
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [syncing, setSyncing] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const fetchIntegrations = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('integrations')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) {
-      toast({ title: "Erro", description: "Falha ao carregar integrações", variant: "destructive" });
-      return;
-    }
-    setIntegrations(data as Integration[] || []);
-  }, [toast]);
+  const { data: integrations, isLoading: isLoadingIntegrations } = useQuery({
+    queryKey: ['integrations'],
+    queryFn: integrationService.fetchIntegrations,
+  });
 
-  const fetchSyncLogs = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('sync_logs')
-      .select(`*, integrations(name, source)`)
-      .order('started_at', { ascending: false })
-      .limit(20);
-    if (error) {
-      console.error('Error fetching sync logs:', error);
-      return;
-    }
-    setSyncLogs(data as SyncLog[] || []);
-  }, []);
+  const { data: syncLogs, isLoading: isLoadingSyncLogs } = useQuery({
+    queryKey: ['syncLogs'],
+    queryFn: integrationService.fetchSyncLogs,
+  });
 
-  useEffect(() => {
-    fetchIntegrations();
-    fetchSyncLogs();
-  }, [fetchIntegrations, fetchSyncLogs]);
-
-  const createIntegration = async (newIntegration: { source: IntegrationSource; name: string; config: IntegrationConfig }) => {
-    if (!newIntegration.source || !newIntegration.name) {
-      toast({ title: "Erro", description: "Preencha todos os campos obrigatórios", variant: "destructive" });
-      return false;
-    }
-    setLoading(true);
-    const { error } = await supabase.from('integrations').insert({
-      source: newIntegration.source,
-      name: newIntegration.name,
-      config: newIntegration.config,
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: "Erro", description: "Falha ao criar integração", variant: "destructive" });
-      return false;
-    } else {
+  const createIntegrationMutation = useMutation({
+    mutationFn: integrationService.createIntegration,
+    onSuccess: () => {
       toast({ title: "Sucesso", description: "Integração criada com sucesso" });
-      fetchIntegrations();
-      return true;
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ['integrations'] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erro", description: error.message || "Falha ao criar integração", variant: "destructive" });
+    },
+  });
 
-  const updateIntegration = async (integrationToUpdate: Integration) => {
-    setLoading(true);
-    const { error } = await supabase
-      .from('integrations')
-      .update({
-        name: integrationToUpdate.name,
-        sync_frequency: integrationToUpdate.sync_frequency,
-        config: integrationToUpdate.config,
-      })
-      .eq('id', integrationToUpdate.id);
-    setLoading(false);
-    if (error) {
-      toast({ title: "Erro", description: "Falha ao atualizar integração", variant: "destructive" });
-      return false;
-    } else {
+  const updateIntegrationMutation = useMutation({
+    mutationFn: integrationService.updateIntegration,
+    onSuccess: () => {
       toast({ title: "Sucesso", description: "Integração atualizada com sucesso" });
-      fetchIntegrations();
-      return true;
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ['integrations'] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erro", description: error.message || "Falha ao atualizar integração", variant: "destructive" });
+    },
+  });
 
-  const deleteIntegration = async (id: string) => {
-    const { error } = await supabase.from('integrations').delete().eq('id', id);
-    if (error) {
-      toast({ title: "Erro", description: "Falha ao deletar integração", variant: "destructive" });
-    } else {
+  const deleteIntegrationMutation = useMutation({
+    mutationFn: integrationService.deleteIntegration,
+    onSuccess: () => {
       toast({ title: "Sucesso", description: "Integração deletada com sucesso" });
-      fetchIntegrations();
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ['integrations'] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Erro", description: error.message || "Falha ao deletar integração", variant: "destructive" });
+    },
+  });
 
-  const syncIntegration = async (integration: Integration) => {
-    setSyncing(integration.id);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Usuário não autenticado');
-
-      const functionName = `${integration.source}-sync`;
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body: { integrationId: integration.id },
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      if (error) throw error;
-      toast({ title: "Sucesso", description: `Sincronização concluída: ${data.created} criados, ${data.updated} atualizados` });
-      fetchSyncLogs();
-      fetchIntegrations();
-    } catch (error: any) {
+  const syncIntegrationMutation = useMutation({
+    mutationFn: integrationService.syncIntegration,
+    onSuccess: (data) => {
+      const createdCount = data?.created ?? 0;
+      const updatedCount = data?.updated ?? 0;
+      toast({ title: "Sucesso", description: `Sincronização concluída: ${createdCount} criados, ${updatedCount} atualizados` });
+      queryClient.invalidateQueries({ queryKey: ['integrations'] });
+      queryClient.invalidateQueries({ queryKey: ['syncLogs'] });
+    },
+    onError: (error: Error) => {
       toast({ title: "Erro", description: `Falha na sincronização: ${error.message}`, variant: "destructive" });
-    } finally {
-      setSyncing(null);
-    }
-  };
+    },
+  });
 
-  return { integrations, syncLogs, loading, syncing, createIntegration, updateIntegration, deleteIntegration, syncIntegration };
+  return { 
+    integrations: integrations ?? [], 
+    syncLogs: syncLogs ?? [], 
+    isLoading: isLoadingIntegrations || isLoadingSyncLogs,
+    createIntegration: createIntegrationMutation,
+    updateIntegration: updateIntegrationMutation,
+    deleteIntegration: deleteIntegrationMutation,
+    syncIntegration: syncIntegrationMutation
+  };
 };
+
