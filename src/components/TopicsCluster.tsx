@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Hash, ArrowUp, ArrowDown, Minus, PlusCircle, Loader2 } from 'lucide-react';
+import { Hash, ArrowUp, ArrowDown, Minus, PlusCircle, Loader2, RefreshCw } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,27 +16,55 @@ interface Topic {
   keywords: string[];
 }
 
-const fetchTopics = async () => {
+const fetchLatestTopics = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    const { data, error } = await supabase.functions.invoke('analyze-topics', {
+    const { data, error } = await supabase
+        .from('topic_analysis_results')
+        .select('topics')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+    
+    if (error && error.code !== 'PGRST116') {
+        throw new Error(error.message);
+    }
+
+    return data?.topics as Topic[] | null;
+};
+
+const analyzeNewTopics = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const { error } = await supabase.functions.invoke('analyze-topics', {
         body: { user_id: user.id },
     });
-
     if (error) throw new Error(error.message);
-    if (!data || !data.topics) throw new Error("Invalid response from analyze-topics function");
-
-    return data.topics as Topic[];
 };
 
 export const TopicsCluster = () => {
-    const { data: topics, isLoading, isError, error } = useQuery<Topic[]>({
-        queryKey: ['topics-cluster'],
-        queryFn: fetchTopics,
-    });
     const queryClient = useQueryClient();
     const { toast } = useToast();
+
+    const { data: topics, isLoading, isError, error } = useQuery<Topic[] | null>({
+        queryKey: ['latest-topics'],
+        queryFn: fetchLatestTopics,
+    });
+
+    const analyzeTopicsMutation = useMutation({
+        mutationFn: analyzeNewTopics,
+        onSuccess: () => {
+            toast({ title: "Análise concluída!", description: "Os tópicos foram atualizados com base nos novos feedbacks." });
+            queryClient.invalidateQueries({ queryKey: ['latest-topics'] });
+        },
+        onError: (err: Error) => {
+            toast({ title: "Erro na Análise", description: err.message, variant: 'destructive' });
+        },
+    });
 
     const createOpportunityMutation = useMutation({
         mutationFn: async (topicName: string) => {
@@ -61,11 +90,22 @@ export const TopicsCluster = () => {
 
     return (
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-900">Tópicos Mais Discutidos</h3>
                     <p className="text-sm text-gray-600">Transforme tópicos em oportunidades para seu roadmap</p>
                 </div>
+                <Button 
+                    onClick={() => analyzeTopicsMutation.mutate()}
+                    disabled={analyzeTopicsMutation.isPending}
+                >
+                    {analyzeTopicsMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    Analisar Tópicos
+                </Button>
             </div>
 
             <div className="space-y-4">
@@ -73,10 +113,14 @@ export const TopicsCluster = () => {
                     Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)
                 )}
 
-                {!isLoading && (isError || !topics || topics.length === 0) && (
+                {!isLoading && (isError || (!topics || topics.length === 0)) && (
                     <div className="text-center py-10">
-                        <p className="text-gray-600">Não há tópicos para serem exibidos.</p>
-                        <p className="text-sm text-gray-500 mt-1">Analise mais feedbacks para ver os tópicos discutidos aqui.</p>
+                        <p className="text-gray-600">
+                            {isError ? "Ocorreu um erro ao buscar os tópicos." : "Nenhuma análise de tópicos encontrada."}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                            {isError ? error.message : "Clique em \"Analisar Tópicos\" para gerar a primeira análise."}
+                        </p>
                     </div>
                 )}
                 

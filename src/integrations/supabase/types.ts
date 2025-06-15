@@ -93,6 +93,7 @@ export type Database = {
           id: string
           integration_id: string | null
           interviewee_name: string | null
+          is_topic_analyzed: boolean
           metadata: Json | null
           priority: Database["public"]["Enums"]["feedback_priority"] | null
           source: Database["public"]["Enums"]["feedback_source"]
@@ -114,6 +115,7 @@ export type Database = {
           id?: string
           integration_id?: string | null
           interviewee_name?: string | null
+          is_topic_analyzed?: boolean
           metadata?: Json | null
           priority?: Database["public"]["Enums"]["feedback_priority"] | null
           source: Database["public"]["Enums"]["feedback_source"]
@@ -135,6 +137,7 @@ export type Database = {
           id?: string
           integration_id?: string | null
           interviewee_name?: string | null
+          is_topic_analyzed?: boolean
           metadata?: Json | null
           priority?: Database["public"]["Enums"]["feedback_priority"] | null
           source?: Database["public"]["Enums"]["feedback_source"]
@@ -359,6 +362,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      topic_analysis_results: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          status: string
+          topics: Json | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          status?: string
+          topics?: Json | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          status?: string
+          topics?: Json | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

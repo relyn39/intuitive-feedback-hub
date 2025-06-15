@@ -1,8 +1,7 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -10,8 +9,6 @@ serve(async (req) => {
   }
 
   try {
-    if (!openAIApiKey) throw new Error('A chave da API da OpenAI não está configurada.');
-    
     const { user_id } = await req.json();
     if (!user_id) throw new Error('O user_id é obrigatório.');
 
@@ -20,24 +17,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 1. Fetch analyzed feedbacks for the user
+    // 1. Fetch NEW (unanalyzed) feedbacks for the user
     const { data: feedbacks, error: feedbackError } = await supabaseAdmin
       .from('feedbacks')
-      .select('title, description, analysis')
+      .select('id, title, description, analysis')
       .eq('user_id', user_id)
+      .eq('is_topic_analyzed', false)
       .not('analysis', 'is', null)
-      .limit(100);
+      .limit(200);
 
     if (feedbackError) throw feedbackError;
 
     if (!feedbacks || feedbacks.length < 3) {
-      return new Response(JSON.stringify({ topics: [] }), {
+      return new Response(JSON.stringify({ 
+        topics: [], 
+        message: "Não há feedbacks novos suficientes para uma nova análise." 
+      }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       });
     }
+    
+    const feedbackIds = feedbacks.map(f => f.id);
 
-    // 2. Fetch user's AI configuration to get the model
+    // 2. Fetch user's AI configuration
     const { data: aiConfig, error: configError } = await supabaseAdmin
         .from('ai_configurations')
         .select('provider, model, api_key')
@@ -138,15 +141,35 @@ serve(async (req) => {
 
     const analysis = JSON.parse(aiResponseText);
     
-    // Add id and a placeholder for change
-    const topicsWithId = analysis.topics.map((topic: any, index: number) => ({
+    const topicsWithDetails = analysis.topics.map((topic: any, index: number) => ({
       ...topic,
       id: index + 1,
-      change: 0 // Placeholder, as calculating change is complex
+      change: 0 // Placeholder
     }));
+    
+    // 5. Store the result in the new table
+    const { error: insertError } = await supabaseAdmin
+      .from('topic_analysis_results')
+      .insert({
+        user_id,
+        topics: topicsWithDetails,
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      });
 
+    if (insertError) throw insertError;
+    
+    // 6. Mark feedbacks as analyzed
+    const { error: updateError } = await supabaseAdmin
+      .from('feedbacks')
+      .update({ is_topic_analyzed: true })
+      .in('id', feedbackIds);
 
-    return new Response(JSON.stringify({ topics: topicsWithId }), {
+    if (updateError) {
+      console.error('Falha ao marcar feedbacks como analisados:', updateError.message);
+    }
+    
+    return new Response(JSON.stringify({ topics: topicsWithDetails }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
