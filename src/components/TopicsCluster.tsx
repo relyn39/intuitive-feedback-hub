@@ -1,10 +1,8 @@
-
 import React from 'react';
-import { Hash, ArrowUp, ArrowDown, Minus, ArrowUpRight, PlusCircle, Loader2 } from 'lucide-react';
+import { Hash, ArrowUp, ArrowDown, Minus, PlusCircle, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
@@ -61,7 +59,6 @@ export const TopicsCluster = () => {
         },
     });
 
-
     return (
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-6">
@@ -69,10 +66,6 @@ export const TopicsCluster = () => {
                     <h3 className="text-lg font-semibold text-gray-900">Tópicos Mais Discutidos</h3>
                     <p className="text-sm text-gray-600">Transforme tópicos em oportunidades para seu roadmap</p>
                 </div>
-                <Link to="/topics-analysis" className="text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium flex items-center gap-1">
-                    Ver análise completa
-                    <ArrowUpRight className="h-3 w-3" />
-                </Link>
             </div>
 
             <div className="space-y-4">

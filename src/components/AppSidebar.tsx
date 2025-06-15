@@ -39,6 +39,11 @@ const items = [
     ]
   },
   {
+    title: "Insights",
+    url: "/topics-analysis",
+    icon: BrainCircuit,
+  },
+  {
     title: "Configurações",
     url: "/settings",
     icon: Settings,
