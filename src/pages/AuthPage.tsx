@@ -78,6 +78,15 @@ const AuthPage = () => {
         }
     };
 
+    const signInWithGoogle = async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+        });
+        if (error) {
+            toast.error(error.message);
+        }
+    };
+
     return (
         <div className="flex justify-center items-center h-full p-4 bg-muted/40">
             <Card className="w-full max-w-md">
@@ -90,6 +99,19 @@ const AuthPage = () => {
                         form={loginForm}
                         onSubmit={onLogin}
                     />
+                    <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">
+                                Ou continue com
+                            </span>
+                        </div>
+                    </div>
+                    <Button variant="outline" className="w-full" onClick={signInWithGoogle}>
+                        Entrar com Google
+                    </Button>
                 </CardContent>
             </Card>
         </div>
@@ -97,3 +119,4 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
+
