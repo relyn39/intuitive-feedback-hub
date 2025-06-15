@@ -58,6 +58,7 @@ const App = () => {
                 <AppSidebar />
                 <SidebarInset className="flex-1">
                   <Routes>
+                    <Route path="/update-password" element={<UpdatePasswordPage />} />
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Navigate to="/" replace />} />
                     <Route path="/feedback" element={<FeedbackReport />} />
