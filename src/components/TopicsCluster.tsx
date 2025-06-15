@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Hash, ArrowUp, ArrowDown, Minus, ArrowUpRight, PlusCircle } from 'lucide-react';
+import { Hash, ArrowUp, ArrowDown, Minus, ArrowUpRight, PlusCircle, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
