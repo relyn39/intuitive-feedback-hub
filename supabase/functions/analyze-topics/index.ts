@@ -1,6 +1,5 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -41,19 +40,23 @@ serve(async (req) => {
     // 2. Fetch user's AI configuration to get the model
     const { data: aiConfig, error: configError } = await supabaseAdmin
         .from('ai_configurations')
-        .select('model')
+        .select('provider, model, api_key')
         .eq('user_id', user_id)
         .single();
     
     if (configError) throw configError;
     if (!aiConfig) throw new Error("Configuração de IA não encontrada para o usuário.");
 
+    const { provider, model, api_key: userApiKey } = aiConfig;
+    const apiKey = userApiKey || Deno.env.get(`${provider.toUpperCase()}_API_KEY`);
+    if (!apiKey) throw new Error(`A chave da API para ${provider} não está configurada.`);
+
     // 3. Format data for the prompt
     const feedbackDataString = feedbacks.map(fb => {
       return `Título: ${fb.title}\nAnálise: ${JSON.stringify(fb.analysis)}`;
     }).join('\n\n---\n\n');
 
-    // 4. Create the prompt for OpenAI
+    // 4. Create the prompt for the AI
     const prompt = `
       Você é um especialista em análise de dados de feedback. Com base no conjunto de feedbacks fornecido, identifique os 5 tópicos mais discutidos.
       Para cada tópico:
@@ -82,31 +85,58 @@ serve(async (req) => {
       --- FIM DOS DADOS ---
     `;
 
-    // 5. Call OpenAI API
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: aiConfig.model || 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'Você é um assistente analista de dados de feedback. Responda sempre com um JSON válido.' },
-          { role: 'user', content: prompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-      }),
-    });
+    let aiResponseText = '';
 
-    if (!aiResponse.ok) {
-      const errorBody = await aiResponse.text();
-      throw new Error(`Falha na API da OpenAI: ${aiResponse.status} ${errorBody}`);
+    if (provider === 'openai' || provider === 'deepseek') {
+        const apiUrl = provider === 'openai' 
+            ? 'https://api.openai.com/v1/chat/completions' 
+            : 'https://api.deepseek.com/v1/chat/completions';
+        
+        const aiResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                messages: [{ role: 'system', content: 'Você é um assistente analista de dados de feedback. Responda sempre com um JSON válido.' }, { role: 'user', content: prompt }],
+                response_format: { type: "json_object" },
+                temperature: 0.3,
+            }),
+        });
+        if (!aiResponse.ok) throw new Error(`Falha na API da ${provider}: ${await aiResponse.text()}`);
+        const data = await aiResponse.json();
+        aiResponseText = data.choices[0].message.content;
+
+    } else if (provider === 'google') {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const aiResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        });
+        if (!aiResponse.ok) throw new Error(`Falha na API da Google: ${await aiResponse.text()}`);
+        const data = await aiResponse.json();
+        const cleanedText = data.candidates[0].content.parts[0].text.replace(/```json\n?|\n?```/g, '');
+        aiResponseText = cleanedText;
+
+    } else if (provider === 'claude') {
+        const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                max_tokens: 2048,
+                messages: [{ role: 'user', content: prompt }],
+                system: 'Você é um assistente analista de dados de feedback. Responda sempre com um JSON válido.',
+            }),
+        });
+        if (!aiResponse.ok) throw new Error(`Falha na API da Anthropic: ${await aiResponse.text()}`);
+        const data = await aiResponse.json();
+        aiResponseText = data.content[0].text;
+    } else {
+        throw new Error(`O provedor de IA '${provider}' não é suportado.`);
     }
 
-    const data = await aiResponse.json();
-    const analysis = JSON.parse(data.choices[0].message.content);
+    const analysis = JSON.parse(aiResponseText);
     
     // Add id and a placeholder for change
     const topicsWithId = analysis.topics.map((topic: any, index: number) => ({
@@ -121,7 +151,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erro na função analyze-topics:', error);
+    console.error('Erro na função analyze-topics:', error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

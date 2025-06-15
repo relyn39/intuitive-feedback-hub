@@ -1,4 +1,4 @@
-
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
@@ -27,9 +27,8 @@ serve(async (req) => {
     if (feedbackError) throw feedbackError;
 
     if (!feedbacks || feedbacks.length < 3) {
-      return new Response(JSON.stringify({ message: "Dados de feedback analisados insuficientes para gerar insights." }), {
+      return new Response(JSON.stringify({ insights: [], message: "Dados de feedback analisados insuficientes para gerar insights." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
       });
     }
 
@@ -43,20 +42,16 @@ serve(async (req) => {
     if (configError) throw configError;
     if (!aiConfig) throw new Error("Configuração de IA não encontrada para o usuário.");
 
-    if (aiConfig.provider !== 'openai') {
-      throw new Error(`O provedor de IA '${aiConfig.provider}' ainda não é suportado para esta funcionalidade.`);
-    }
-
-    const apiKey = aiConfig.api_key || Deno.env.get('OPENAI_API_KEY');
-    if (!apiKey) throw new Error('A chave da API da OpenAI não está configurada para este usuário nem no ambiente.');
-
+    const { provider, model, api_key: userApiKey } = aiConfig;
+    const apiKey = userApiKey || Deno.env.get(`${provider.toUpperCase()}_API_KEY`);
+    if (!apiKey) throw new Error(`A chave da API para ${provider} não está configurada.`);
 
     // 3. Format data for the prompt
     const feedbackDataString = feedbacks.map(fb => {
       return `Título: ${fb.title}\nDescrição: ${fb.description}\nAnálise: ${JSON.stringify(fb.analysis)}`;
     }).join('\n\n---\n\n');
 
-    // 4. Create the prompt for OpenAI
+    // 4. Create the prompt for the AI
     const prompt = `
       Você é um assistente especialista em análise de dados de feedback de produto. Com base no conjunto de dados de feedback fornecido, gere de 3 a 5 insights importantes.
       Para cada insight, identifique se é uma 'trend' (tendência), 'alert' (alerta) ou 'opportunity' (oportunidade).
@@ -81,32 +76,59 @@ serve(async (req) => {
       ${feedbackDataString}
       --- FIM DOS DADOS ---
     `;
+    
+    let aiResponseText = '';
 
-    // 5. Call OpenAI API
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: aiConfig.model || 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'Você é um assistente analista de dados de feedback. Responda sempre com um JSON válido.' },
-          { role: 'user', content: prompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.5,
-      }),
-    });
+    if (provider === 'openai' || provider === 'deepseek') {
+        const apiUrl = provider === 'openai' 
+            ? 'https://api.openai.com/v1/chat/completions' 
+            : 'https://api.deepseek.com/v1/chat/completions';
+        
+        const aiResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                messages: [{ role: 'system', content: 'Você é um assistente analista de dados de feedback. Responda sempre com um JSON válido.' }, { role: 'user', content: prompt }],
+                response_format: { type: "json_object" },
+                temperature: 0.5,
+            }),
+        });
+        if (!aiResponse.ok) throw new Error(`Falha na API da ${provider}: ${await aiResponse.text()}`);
+        const data = await aiResponse.json();
+        aiResponseText = data.choices[0].message.content;
 
-    if (!aiResponse.ok) {
-      const errorBody = await aiResponse.text();
-      throw new Error(`Falha na API da OpenAI: ${aiResponse.status} ${errorBody}`);
+    } else if (provider === 'google') {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const aiResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        });
+        if (!aiResponse.ok) throw new Error(`Falha na API da Google: ${await aiResponse.text()}`);
+        const data = await aiResponse.json();
+        const cleanedText = data.candidates[0].content.parts[0].text.replace(/```json\n?|\n?```/g, '');
+        aiResponseText = cleanedText;
+
+    } else if (provider === 'claude') {
+        const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                max_tokens: 2048,
+                messages: [{ role: 'user', content: prompt }],
+                system: 'Você é um assistente analista de dados de feedback. Responda sempre com um JSON válido.',
+            }),
+        });
+        if (!aiResponse.ok) throw new Error(`Falha na API da Anthropic: ${await aiResponse.text()}`);
+        const data = await aiResponse.json();
+        aiResponseText = data.content[0].text;
+    } else {
+        throw new Error(`O provedor de IA '${provider}' não é suportado.`);
     }
 
-    const data = await aiResponse.json();
-    const analysis = JSON.parse(data.choices[0].message.content);
+    const analysis = JSON.parse(aiResponseText);
     const insightsToInsert = analysis.insights;
 
     if (!insightsToInsert || !Array.isArray(insightsToInsert)) {
@@ -123,12 +145,12 @@ serve(async (req) => {
     const { error: insertError } = await supabaseAdmin.from('insights').insert(insightsWithUserId);
     if (insertError) throw insertError;
     
-    return new Response(JSON.stringify({ message: "Insights gerados e salvos com sucesso!" }), {
+    return new Response(JSON.stringify({ insights: insightsWithUserId }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Erro na função generate-insights:', error);
+    console.error('Erro na função generate-insights:', error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
