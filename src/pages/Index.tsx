@@ -16,22 +16,23 @@ const Index = () => {
         <h1 className="text-lg font-semibold">Dashboard de Feedback</h1>
       </header>
       
-      <main className="flex-1 p-4 md:p-6 space-y-6">
-        <FeedbackDashboard />
-        
-        <Tabs defaultValue="feedbacks" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:w-[300px]">
-            <TabsTrigger value="feedbacks">Lista de Feedbacks</TabsTrigger>
-            <TabsTrigger value="roadmap">Roadmap Visual</TabsTrigger>
+      <main className="flex-1 p-4 md:p-6">
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 sm:w-[400px] mb-6">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="feedbacks">Feedbacks</TabsTrigger>
+            <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
           </TabsList>
-          <TabsContent value="feedbacks" className="mt-4">
+          <TabsContent value="dashboard">
+            <FeedbackDashboard />
+          </TabsContent>
+          <TabsContent value="feedbacks">
             <FeedbackList />
           </TabsContent>
-          <TabsContent value="roadmap" className="mt-4">
+          <TabsContent value="roadmap">
             <Roadmap />
           </TabsContent>
         </Tabs>
-
       </main>
     </div>
   );
