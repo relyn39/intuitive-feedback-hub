@@ -67,7 +67,11 @@ export const useIntegrations = () => {
     setLoading(true);
     const { error } = await supabase
       .from('integrations')
-      .update({ name: integrationToUpdate.name, sync_frequency: integrationToUpdate.sync_frequency })
+      .update({
+        name: integrationToUpdate.name,
+        sync_frequency: integrationToUpdate.sync_frequency,
+        config: integrationToUpdate.config,
+      })
       .eq('id', integrationToUpdate.id);
     setLoading(false);
     if (error) {

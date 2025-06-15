@@ -5,7 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Integration, IntegrationSyncFrequency } from './types';
+import { Integration, IntegrationSyncFrequency, IntegrationConfig, JiraConfig, NotionConfig, ZohoConfig } from './types';
+import { JiraConfigForm } from './config-forms/JiraConfigForm';
+import { NotionConfigForm } from './config-forms/NotionConfigForm';
+import { ZohoConfigForm } from './config-forms/ZohoConfigForm';
+import { ZapierConfigForm } from './config-forms/ZapierConfigForm';
 
 interface EditIntegrationDialogProps {
   isOpen: boolean;
@@ -30,15 +34,36 @@ export const EditIntegrationDialog: React.FC<EditIntegrationDialogProps> = ({ is
     }
   };
 
+  const handleConfigChange = (newConfig: IntegrationConfig) => {
+    setEditableIntegration(prev => prev ? { ...prev, config: newConfig } : null);
+  };
+
+  const renderConfigForm = () => {
+    if (!editableIntegration) return null;
+
+    switch (editableIntegration.source) {
+      case 'jira':
+        return <JiraConfigForm config={editableIntegration.config as JiraConfig} onConfigChange={handleConfigChange} />;
+      case 'notion':
+        return <NotionConfigForm config={editableIntegration.config as NotionConfig} onConfigChange={handleConfigChange} />;
+      case 'zoho':
+        return <ZohoConfigForm config={editableIntegration.config as ZohoConfig} onConfigChange={handleConfigChange} />;
+      case 'zapier':
+        return <ZapierConfigForm />;
+      default:
+        return <p className="text-sm text-muted-foreground">Esta integração não possui configurações editáveis.</p>;
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Editar Integração</DialogTitle>
-          <DialogDescription>Atualize o nome e a frequência de sincronização.</DialogDescription>
+          <DialogDescription>Atualize os detalhes e a configuração da sua integração.</DialogDescription>
         </DialogHeader>
         {editableIntegration && (
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <div>
               <Label htmlFor="edit-name">Nome da Integração</Label>
               <Input
@@ -67,6 +92,10 @@ export const EditIntegrationDialog: React.FC<EditIntegrationDialogProps> = ({ is
                 </Select>
               </div>
             )}
+            <div className="pt-4 border-t">
+              <h4 className="text-md font-medium mb-4">Configuração da Fonte</h4>
+               {renderConfigForm()}
+            </div>
           </div>
         )}
         <DialogFooter>
