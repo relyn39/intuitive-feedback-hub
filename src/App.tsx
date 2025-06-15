@@ -7,6 +7,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import Index from "./pages/Index";
 import Settings from "./pages/Settings";
 import SettingsIntegrations from "./pages/SettingsIntegrations";
@@ -75,43 +77,48 @@ const App = () => {
   }
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          {session ? (
-            <SidebarProvider>
-              <div className="min-h-screen flex w-full">
-                <AppSidebar />
-                <SidebarInset className="flex-1">
-                  <Routes>
-                    <Route path="/update-password" element={<UpdatePasswordPage />} />
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Navigate to="/" replace />} />
-                    <Route path="/feedback" element={<FeedbackReport />} />
-                    <Route path="/feedback/:source" element={<FeedbackReport />} />
-                    <Route path="/topics-analysis" element={<TopicsAnalysis />} />
-                    <Route path="/settings" element={<Settings />}>
-                      <Route path="integrations" element={<SettingsIntegrations />} />
-                      <Route path="ai" element={<SettingsAi />} />
-                      <Route path="users" element={<SettingsUsers />} />
-                    </Route>
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </SidebarInset>
-              </div>
-            </SidebarProvider>
-          ) : (
-             <Routes>
-                <Route path="/auth" element={<AuthPage />} />
-                <Route path="/update-password" element={<UpdatePasswordPage />} />
-                <Route path="*" element={<Navigate to="/auth" replace />} />
-            </Routes>
-          )}
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            {session ? (
+              <SidebarProvider>
+                <div className="min-h-screen flex w-full">
+                  <AppSidebar />
+                  <SidebarInset className="flex-1 relative">
+                    <div className="absolute top-4 right-6 z-50">
+                      <ThemeToggle />
+                    </div>
+                    <Routes>
+                      <Route path="/update-password" element={<UpdatePasswordPage />} />
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<Navigate to="/" replace />} />
+                      <Route path="/feedback" element={<FeedbackReport />} />
+                      <Route path="/feedback/:source" element={<FeedbackReport />} />
+                      <Route path="/topics-analysis" element={<TopicsAnalysis />} />
+                      <Route path="/settings" element={<Settings />}>
+                        <Route path="integrations" element={<SettingsIntegrations />} />
+                        <Route path="ai" element={<SettingsAi />} />
+                        <Route path="users" element={<SettingsUsers />} />
+                      </Route>
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </SidebarInset>
+                </div>
+              </SidebarProvider>
+            ) : (
+               <Routes>
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/update-password" element={<UpdatePasswordPage />} />
+                  <Route path="*" element={<Navigate to="/auth" replace />} />
+              </Routes>
+            )}
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 
