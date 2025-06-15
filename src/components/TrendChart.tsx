@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
@@ -57,24 +56,24 @@ export const TrendChart = () => {
   const chartData = React.useMemo(() => processChartData(feedbacks), [feedbacks]);
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div className="bg-card rounded-xl p-6 shadow-sm border">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Análise de Sentimento - Últimos 7 dias</h3>
-          <p className="text-sm text-gray-600">Distribuição e tendências do sentimento dos feedbacks</p>
+          <h3 className="text-lg font-semibold text-card-foreground">Análise de Sentimento - Últimos 7 dias</h3>
+          <p className="text-sm text-muted-foreground">Distribuição e tendências do sentimento dos feedbacks</p>
         </div>
         <div className="flex space-x-4 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span className="text-gray-600">Positivo</span>
+            <span className="text-muted-foreground">Positivo</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            <span className="text-gray-600">Negativo</span>
+            <span className="text-muted-foreground">Negativo</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-            <span className="text-gray-600">Neutro</span>
+            <span className="text-muted-foreground">Neutro</span>
           </div>
         </div>
       </div>
@@ -86,8 +85,8 @@ export const TrendChart = () => {
           </div>
         ) : !chartData || chartData.every(d => d.positive === 0 && d.negative === 0 && d.neutral === 0) ? (
           <div className="w-full h-full flex flex-col items-center justify-center text-center">
-            <p className="text-gray-600">Não há dados de sentimento para os últimos 7 dias.</p>
-            <p className="text-sm text-gray-500 mt-1">Analise alguns feedbacks para ver o gráfico.</p>
+            <p className="text-muted-foreground">Não há dados de sentimento para os últimos 7 dias.</p>
+            <p className="text-sm text-muted-foreground mt-1">Analise alguns feedbacks para ver o gráfico.</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
@@ -102,24 +101,25 @@ export const TrendChart = () => {
                   <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
                 dataKey="date" 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
               />
               <YAxis 
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                 allowDecimals={false}
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
+                  backgroundColor: 'hsl(var(--card))', 
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: 'var(--radius)',
+                  color: 'hsl(var(--card-foreground))',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}
               />

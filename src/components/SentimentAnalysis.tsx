@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
@@ -25,8 +24,8 @@ export const SentimentAnalysis = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Distribuição de Sentimento</h3>
+      <div className="bg-card rounded-xl p-6 shadow-sm border">
+        <h3 className="text-lg font-semibold text-card-foreground mb-6">Distribuição de Sentimento</h3>
         <div className="flex justify-center items-center h-48">
           <Skeleton className="h-48 w-48 rounded-full" />
         </div>
@@ -59,10 +58,10 @@ export const SentimentAnalysis = () => {
 
   if (totalAnalyzed === 0) {
     return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col items-center justify-center h-full min-h-[350px]">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Distribuição de Sentimento</h3>
-        <p className="text-sm text-gray-600 text-center">Nenhum feedback analisado ainda.</p>
-        <p className="text-xs text-gray-500 mt-2 text-center">Clique em "Analisar" na lista de feedbacks para começar a ver os dados aqui.</p>
+      <div className="bg-card rounded-xl p-6 shadow-sm border flex flex-col items-center justify-center h-full min-h-[350px]">
+        <h3 className="text-lg font-semibold text-card-foreground mb-4 text-center">Distribuição de Sentimento</h3>
+        <p className="text-sm text-muted-foreground text-center">Nenhum feedback analisado ainda.</p>
+        <p className="text-xs text-muted-foreground mt-2 text-center">Clique em "Analisar" na lista de feedbacks para começar a ver os dados aqui.</p>
       </div>
     );
   }
@@ -76,8 +75,8 @@ export const SentimentAnalysis = () => {
     .filter(item => item.value > 0);
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Distribuição de Sentimento</h3>
+    <div className="bg-card rounded-xl p-6 shadow-sm border">
+      <h3 className="text-lg font-semibold text-card-foreground mb-6">Distribuição de Sentimento</h3>
       
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
@@ -99,9 +98,10 @@ export const SentimentAnalysis = () => {
             <Tooltip 
               formatter={(value, name) => [`${value}%`, name]}
               contentStyle={{ 
-                backgroundColor: 'white', 
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
+                backgroundColor: 'hsl(var(--card))', 
+                border: '1px solid hsl(var(--border))',
+                borderRadius: 'var(--radius)',
+                color: 'hsl(var(--card-foreground))',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
               }}
             />
@@ -117,9 +117,9 @@ export const SentimentAnalysis = () => {
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: item.color }}
               ></div>
-              <span className="text-sm text-gray-700">{item.name}</span>
+              <span className="text-sm text-muted-foreground">{item.name}</span>
             </div>
-            <span className="text-sm font-medium text-gray-900">{item.value}%</span>
+            <span className="text-sm font-medium text-card-foreground">{item.value}%</span>
           </div>
         ))}
       </div>
