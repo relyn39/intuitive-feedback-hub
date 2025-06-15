@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +20,7 @@ import {
 import { AddManualFeedback } from '@/components/AddManualFeedback';
 import { ImportFeedback } from '@/components/ImportFeedback';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 
 type Feedback = Tables<'feedbacks'>;
 
@@ -57,6 +57,7 @@ const FeedbackReport = () => {
     const [debouncedTagFilter, setDebouncedTagFilter] = useState('');
     const [addManualOpen, setAddManualOpen] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
+    const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
     useEffect(() => {
         setSourceFilter(source || 'all');
@@ -73,6 +74,10 @@ const FeedbackReport = () => {
             clearTimeout(handler);
         };
     }, [tagInput]);
+
+    useEffect(() => {
+        setSelectedRows([]);
+    }, [page, sourceFilter, debouncedTagFilter]);
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ['feedbacks', page, ITEMS_PER_PAGE, sourceFilter, debouncedTagFilter],
@@ -117,6 +122,26 @@ const FeedbackReport = () => {
         }
     });
 
+    const generateInsightFromSelectionMutation = useMutation({
+        mutationFn: async (feedbackIds: string[]) => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Usuário não autenticado.");
+    
+            const { error } = await supabase.functions.invoke('generate-insight-from-selection', {
+                body: { feedback_ids: feedbackIds, user_id: user.id },
+            });
+            if (error) throw new Error(error.message);
+        },
+        onSuccess: () => {
+            toast.success('Insight gerado com sucesso a partir da seleção!');
+            queryClient.invalidateQueries({ queryKey: ['insights'] });
+            setSelectedRows([]);
+        },
+        onError: (error) => {
+            toast.error(`Erro ao gerar insight: ${error.message}`);
+        }
+    });
+
     const feedbacks = data?.feedbacks ?? [];
     const totalCount = data?.count ?? 0;
     const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -126,6 +151,12 @@ const FeedbackReport = () => {
             navigate('/feedback');
         } else {
             navigate(`/feedback/${value}`);
+        }
+    };
+
+    const handleGenerateInsight = () => {
+        if (selectedRows.length > 0) {
+            generateInsightFromSelectionMutation.mutate(selectedRows);
         }
     };
 
@@ -148,6 +179,19 @@ const FeedbackReport = () => {
                                 <CardDescription>Visualize, analise e gerencie todos os feedbacks recebidos.</CardDescription>
                             </div>
                             <div className="flex items-center flex-wrap gap-2">
+                                {selectedRows.length > 0 && (
+                                    <Button
+                                        onClick={handleGenerateInsight}
+                                        disabled={generateInsightFromSelectionMutation.isPending}
+                                    >
+                                        {generateInsightFromSelectionMutation.isPending ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Wand2 className="mr-2 h-4 w-4" />
+                                        )}
+                                        Gerar Insight ({selectedRows.length})
+                                    </Button>
+                                )}
                                 <div className="w-full sm:w-auto sm:min-w-[200px]">
                                     <Select value={sourceFilter} onValueChange={handleFilterChange}>
                                         <SelectTrigger>
@@ -217,6 +261,19 @@ const FeedbackReport = () => {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead className="w-[50px]">
+                                              <Checkbox
+                                                checked={feedbacks.length > 0 && selectedRows.length === feedbacks.length}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setSelectedRows(feedbacks.map(fb => fb.id));
+                                                    } else {
+                                                        setSelectedRows([]);
+                                                    }
+                                                }}
+                                                aria-label="Selecionar todas as linhas"
+                                              />
+                                            </TableHead>
                                             <TableHead>Título</TableHead>
                                             <TableHead>Fonte</TableHead>
                                             <TableHead>Análise IA</TableHead>
@@ -225,7 +282,20 @@ const FeedbackReport = () => {
                                     </TableHeader>
                                     <TableBody>
                                         {feedbacks.map((fb: Feedback) => (
-                                            <TableRow key={fb.id}>
+                                            <TableRow key={fb.id} data-state={selectedRows.includes(fb.id) && "selected"}>
+                                                <TableCell>
+                                                  <Checkbox
+                                                    checked={selectedRows.includes(fb.id)}
+                                                    onCheckedChange={(checked) => {
+                                                        setSelectedRows(prev => 
+                                                            checked
+                                                                ? [...prev, fb.id]
+                                                                : prev.filter(id => id !== fb.id)
+                                                        );
+                                                    }}
+                                                    aria-label="Selecionar linha"
+                                                  />
+                                                </TableCell>
                                                 <TableCell className="font-medium">{fb.title}</TableCell>
                                                 <TableCell><Badge variant="outline">{fb.source}</Badge></TableCell>
                                                 <TableCell>{renderAnalysis(fb.analysis)}</TableCell>
