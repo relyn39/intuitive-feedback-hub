@@ -1,10 +1,12 @@
-import React from 'react';
-import { Lightbulb, TrendingUp, AlertCircle, Target, Loader2, Wand2 } from 'lucide-react';
+
+import React, { useState } from 'react';
+import { Lightbulb, TrendingUp, AlertCircle, Target, Loader2, Wand2, Pencil, Check, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface Insight {
   id: string;
@@ -61,13 +63,15 @@ const generateInsights = async () => {
 export const InsightsPanel = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [editingInsightId, setEditingInsightId] = useState<string | null>(null);
+  const [tagInputValue, setTagInputValue] = useState('');
 
-  const { data: insights, isLoading, error } = useQuery({
+  const { data: insights, isLoading, error } = useQuery<Insight[]>({
     queryKey: ['insights'],
     queryFn: fetchInsights,
   });
 
-  const mutation = useMutation({
+  const generateInsightsMutation = useMutation({
     mutationFn: generateInsights,
     onSuccess: () => {
       toast({ title: "Sucesso!", description: "Os novos insights estão sendo carregados." });
@@ -78,6 +82,32 @@ export const InsightsPanel = () => {
     },
   });
 
+  const updateInsightMutation = useMutation({
+    mutationFn: async ({ insightId, tags }: { insightId: string; tags: string[] }) => {
+      const { data, error } = await supabase.from('insights').update({ tags }).eq('id', insightId).select();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['insights'] });
+      toast({ title: 'Sucesso!', description: 'As tags foram atualizadas.' });
+      setEditingInsightId(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Erro ao atualizar tags', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  const handleStartEditing = (insight: Insight) => {
+    setEditingInsightId(insight.id);
+    setTagInputValue(insight.tags?.join(', ') || '');
+  };
+
+  const handleSaveTags = (insightId: string) => {
+    const tags = tagInputValue.split(',').map((t) => t.trim()).filter(Boolean);
+    updateInsightMutation.mutate({ insightId, tags });
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 min-h-[300px]">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
@@ -85,8 +115,8 @@ export const InsightsPanel = () => {
           <Lightbulb className="w-5 h-5 text-yellow-600" />
           <h3 className="text-lg font-semibold text-gray-900">Insights Automáticos</h3>
         </div>
-        <Button onClick={() => mutation.mutate()} disabled={mutation.isPending} size="sm">
-          {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+        <Button onClick={() => generateInsightsMutation.mutate()} disabled={generateInsightsMutation.isPending} size="sm">
+          {generateInsightsMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
           Gerar Novos Insights
         </Button>
       </div>
@@ -122,15 +152,49 @@ export const InsightsPanel = () => {
                   <div className="flex-1">
                     <h4 className="font-medium text-sm mb-1">{insight.title}</h4>
                     <p className="text-sm opacity-90 mb-2">{insight.description}</p>
-                    {insight.tags && insight.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {insight.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs bg-white/50">
-                            {tag}
-                          </Badge>
-                        ))}
+                    
+                    {editingInsightId === insight.id ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            placeholder="Tags separadas por vírgula"
+                            value={tagInputValue}
+                            onChange={(e) => setTagInputValue(e.target.value)}
+                            className="bg-white/80 h-8 text-sm flex-grow"
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveTags(insight.id)}
+                          />
+                          <Button size="icon" className="h-8 w-8 flex-shrink-0" onClick={() => handleSaveTags(insight.id)} disabled={updateInsightMutation.isPending}>
+                            {updateInsightMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 flex-shrink-0" onClick={() => setEditingInsightId(null)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500">Pressione Enter para salvar.</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        {insight.tags && insight.tags.length > 0 ? (
+                          insight.tags.map((tag) => (
+                            <Badge key={tag} variant="outline" className="text-xs bg-white/50">
+                              {tag}
+                            </Badge>
+                          ))
+                        ) : (
+                          <p className="text-xs text-gray-500 italic">Sem tags</p>
+                        )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          onClick={() => handleStartEditing(insight)}
+                        >
+                          <Pencil className="h-3 w-3" />
+                          <span className="sr-only">Editar tags</span>
+                        </Button>
                       </div>
                     )}
+
                     {insight.action && (
                       <button className="text-xs font-medium px-2 py-1 bg-white bg-opacity-70 rounded hover:bg-opacity-100 transition-colors">
                         {insight.action}

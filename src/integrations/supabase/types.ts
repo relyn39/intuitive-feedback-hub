@@ -161,6 +161,7 @@ export type Database = {
           description: string
           id: string
           severity: Database["public"]["Enums"]["insight_severity"]
+          tags: string[] | null
           title: string
           type: Database["public"]["Enums"]["insight_type"]
           user_id: string
@@ -171,6 +172,7 @@ export type Database = {
           description: string
           id?: string
           severity: Database["public"]["Enums"]["insight_severity"]
+          tags?: string[] | null
           title: string
           type: Database["public"]["Enums"]["insight_type"]
           user_id: string
@@ -181,6 +183,7 @@ export type Database = {
           description?: string
           id?: string
           severity?: Database["public"]["Enums"]["insight_severity"]
+          tags?: string[] | null
           title?: string
           type?: Database["public"]["Enums"]["insight_type"]
           user_id?: string
@@ -221,6 +224,66 @@ export type Database = {
           name?: string
           source?: Database["public"]["Enums"]["feedback_source"]
           sync_frequency?: Database["public"]["Enums"]["integration_sync_frequency"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      opportunity_insights: {
+        Row: {
+          insight_id: string
+          opportunity_id: string
+        }
+        Insert: {
+          insight_id: string
+          opportunity_id: string
+        }
+        Update: {
+          insight_id?: string
+          opportunity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_insights_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "insights"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_insights_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "product_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_opportunities: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          status: Database["public"]["Enums"]["opportunity_status"]
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["opportunity_status"]
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["opportunity_status"]
+          title?: string
           updated_at?: string | null
           user_id?: string
         }
@@ -312,6 +375,7 @@ export type Database = {
       insight_severity: "info" | "warning" | "success" | "error"
       insight_type: "trend" | "alert" | "opportunity" | "other"
       integration_sync_frequency: "manual" | "hourly" | "twice_daily" | "daily"
+      opportunity_status: "backlog" | "próximo" | "em_andamento" | "concluído"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -434,6 +498,7 @@ export const Constants = {
       insight_severity: ["info", "warning", "success", "error"],
       insight_type: ["trend", "alert", "opportunity", "other"],
       integration_sync_frequency: ["manual", "hourly", "twice_daily", "daily"],
+      opportunity_status: ["backlog", "próximo", "em_andamento", "concluído"],
     },
   },
 } as const

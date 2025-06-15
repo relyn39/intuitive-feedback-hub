@@ -1,9 +1,12 @@
+
 import React from 'react';
-import { Hash, ArrowUp, ArrowDown, Minus, ArrowUpRight } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Hash, ArrowUp, ArrowDown, Minus, ArrowUpRight, PlusCircle } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface Topic {
   id: number;
@@ -33,13 +36,38 @@ export const TopicsCluster = () => {
         queryKey: ['topics-cluster'],
         queryFn: fetchTopics,
     });
+    const queryClient = useQueryClient();
+    const { toast } = useToast();
+
+    const createOpportunityMutation = useMutation({
+        mutationFn: async (topicName: string) => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Usuário não autenticado.");
+            
+            const { error } = await supabase.from('product_opportunities').insert({
+              title: topicName,
+              user_id: user.id,
+              status: 'backlog',
+            });
+            if (error) throw error;
+            return topicName;
+        },
+        onSuccess: (topicName) => {
+            toast({ title: "Oportunidade Criada!", description: `"${topicName}" foi adicionado ao seu roadmap.` });
+            queryClient.invalidateQueries({ queryKey: ['product_opportunities'] });
+        },
+        onError: (err: Error) => {
+            toast({ title: "Erro ao criar oportunidade", description: err.message, variant: 'destructive' });
+        },
+    });
+
 
     return (
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-900">Tópicos Mais Discutidos</h3>
-                    <p className="text-sm text-gray-600">Clustering automático baseado em análise semântica</p>
+                    <p className="text-sm text-gray-600">Transforme tópicos em oportunidades para seu roadmap</p>
                 </div>
                 <Link to="/topics-analysis" className="text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium flex items-center gap-1">
                     Ver análise completa
@@ -71,9 +99,9 @@ export const TopicsCluster = () => {
 
                     return (
                         <div key={topic.id} className={`p-4 rounded-lg border ${sentimentColors[topic.sentiment as keyof typeof sentimentColors]}`}>
-                            <div className="flex items-center justify-between mb-3">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-3">
                                 <div className="flex items-center space-x-3">
-                                    <Hash className="w-5 h-5 text-gray-600" />
+                                    <Hash className="w-5 h-5 text-gray-600 flex-shrink-0" />
                                     <h4 className="font-medium text-gray-900">{topic.name}</h4>
                                 </div>
                                 <div className="flex items-center space-x-4">
@@ -85,12 +113,28 @@ export const TopicsCluster = () => {
                                 </div>
                             </div>
                             
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 mb-4">
                                 {topic.keywords.map((keyword, index) => (
                                     <span key={index} className="px-2 py-1 bg-white bg-opacity-60 text-xs text-gray-700 rounded-md">
                                         {keyword}
                                     </span>
                                 ))}
+                            </div>
+                            
+                            <div className="flex justify-end">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => createOpportunityMutation.mutate(topic.name)}
+                                    disabled={createOpportunityMutation.isPending && createOpportunityMutation.variables === topic.name}
+                                >
+                                  {createOpportunityMutation.isPending && createOpportunityMutation.variables === topic.name ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                  )}
+                                  Criar Oportunidade
+                                </Button>
                             </div>
                         </div>
                     );
