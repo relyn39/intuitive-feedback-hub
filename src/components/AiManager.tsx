@@ -94,18 +94,25 @@ export const AiManager = () => {
     },
   });
 
-  const watchedProvider = form.watch('provider');
-  
   useEffect(() => {
     if (config) {
+      let defaultModel = '';
+      if (config.provider === 'openai') {
+        defaultModel = 'gpt-4o-mini';
+      } else if (config.provider === 'google') {
+        defaultModel = 'gemini-1.5-pro-latest';
+      }
+
       form.reset({
         provider: config.provider as 'openai' | 'google',
-        model: config.model || (config.provider === 'openai' ? 'gpt-4o-mini' : ''),
+        model: config.model || defaultModel,
         api_key: '', // Sempre manter o campo da chave em branco ao carregar
       });
     }
   }, [config, form]);
 
+  const watchedProvider = form.watch('provider');
+  
   return (
     <Card>
       <CardHeader>
@@ -132,7 +139,17 @@ export const AiManager = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Provedor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={(value: 'openai' | 'google') => {
+                      field.onChange(value);
+                      if (value === 'openai') {
+                        form.setValue('model', 'gpt-4o-mini', { shouldValidate: true });
+                      } else if (value === 'google') {
+                        form.setValue('model', 'gemini-1.5-pro-latest', { shouldValidate: true });
+                      }
+                    }}
+                    value={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um provedor" />
