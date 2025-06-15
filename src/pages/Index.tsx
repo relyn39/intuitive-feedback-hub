@@ -13,8 +13,8 @@ const Index = () => {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <div className="flex items-center gap-2">
-          {/* <img src="/lovable-uploads/a4ed2f79-4004-43a2-9f8e-faf6210a08a.png" alt="Feedback-Hub Logo" className="h-8 w-8 block dark:hidden" /> */}
-          <img src="/lovable-uploads/a29f8301-8f7b-48e8-be65-36b51d7c7c66.png" alt="Feedback-Hub Logo" className="h-8 w-8 hidden dark:block" />
+          <img src="/lovable-uploads/a4ed2f79-4004-43a2-9f8e-faf6210a08a.png" alt="Feedback-Hub Logo" className="h-8 w-8 object-contain block dark:hidden" />
+          <img src="/lovable-uploads/a29f8301-8f7b-48e8-be65-36b51d7c7c66.png" alt="Feedback-Hub Logo" className="h-8 w-8 object-contain hidden dark:block" />
           <span className="text-lg font-semibold">Feedback-Hub</span>
         </div>
       </header>
