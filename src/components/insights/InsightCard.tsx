@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -71,10 +70,10 @@ export const InsightCard = ({ insight }: InsightCardProps) => {
   
   const Icon = iconMap[insight.type] || Lightbulb;
   const severityColors = {
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
-    warning: 'bg-orange-50 border-orange-200 text-orange-800',
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800'
+    info: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300',
+    warning: 'bg-orange-50 border-orange-200 text-orange-800 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-300',
+    success: 'bg-green-50 border-green-200 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300',
+    error: 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-300'
   };
 
   return (
@@ -96,12 +95,12 @@ export const InsightCard = ({ insight }: InsightCardProps) => {
             <div className="flex flex-wrap items-center gap-2 mb-2">
               {insight.tags && insight.tags.length > 0 ? (
                 insight.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-xs bg-white/50">
+                  <Badge key={tag} variant="outline" className="text-xs bg-background/50">
                     {tag}
                   </Badge>
                 ))
               ) : (
-                <p className="text-xs text-gray-500 italic">Sem tags</p>
+                <p className="text-xs text-muted-foreground italic">Sem tags</p>
               )}
               <Button
                 size="icon"
@@ -115,9 +114,9 @@ export const InsightCard = ({ insight }: InsightCardProps) => {
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-black border-opacity-5">
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-black/5 dark:border-white/10">
             {insight.action && (
-                <span className="text-xs text-gray-600 italic max-w-[50%]">{insight.action}</span>
+                <span className="text-xs text-muted-foreground italic max-w-[50%]">{insight.action}</span>
             )}
             <Button
                 variant="outline"

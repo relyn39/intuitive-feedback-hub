@@ -54,8 +54,8 @@ export const FeedbackDashboard = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard de Feedback</h1>
-          <p className="text-gray-600 mt-1">Análise inteligente de feedback dos usuários em tempo real</p>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard de Feedback</h1>
+          <p className="text-muted-foreground mt-1">Análise inteligente de feedback dos usuários em tempo real</p>
         </div>
         <div className="flex items-center space-x-2">
           <Button

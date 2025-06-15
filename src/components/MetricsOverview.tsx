@@ -30,7 +30,7 @@ const fetchMetrics = async (): Promise<MetricsResponse> => {
 };
 
 const MetricCardSkeleton = () => (
-  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+  <div className="bg-card rounded-xl p-6 shadow-sm border">
     <div className="flex items-center justify-between mb-4">
       <Skeleton className="h-12 w-12 rounded-lg" />
       <Skeleton className="h-6 w-16" />
@@ -49,13 +49,28 @@ export const MetricsOverview = () => {
     refetchOnWindowFocus: false,
   });
 
+  const colorClasses = {
+    blue: {
+      bg: 'bg-blue-50 dark:bg-blue-950/50',
+      text: 'text-blue-600 dark:text-blue-400',
+    },
+    green: {
+      bg: 'bg-green-50 dark:bg-green-950/50',
+      text: 'text-green-600 dark:text-green-400',
+    },
+    red: {
+      bg: 'bg-red-50 dark:bg-red-950/50',
+      text: 'text-red-600 dark:text-red-400',
+    },
+  };
+
   const metricsConfig = data ? [
     {
       title: 'Total de Itens',
       value: data.totalItems.value.toLocaleString('pt-BR'),
       change: data.totalItems.change,
       icon: Package,
-      color: 'blue',
+      color: 'blue' as const,
       unit: '%',
       higherIsBetter: true,
     },
@@ -64,7 +79,7 @@ export const MetricsOverview = () => {
       value: `${data.positiveSentiment.value.toFixed(1)}%`,
       change: data.positiveSentiment.change,
       icon: Star,
-      color: 'green',
+      color: 'green' as const,
       unit: 'pp',
       higherIsBetter: true,
     },
@@ -73,7 +88,7 @@ export const MetricsOverview = () => {
       value: data.criticalIssues.value.toLocaleString('pt-BR'),
       change: data.criticalIssues.change,
       icon: AlertTriangle,
-      color: 'red',
+      color: 'red' as const,
       unit: '%',
       higherIsBetter: false,
     }
@@ -90,9 +105,9 @@ export const MetricsOverview = () => {
   if (isError) {
      return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="col-span-full text-center py-10 bg-white rounded-xl shadow-sm border border-gray-100">
-                <p className="text-gray-600">Não há dados para serem exibidos.</p>
-                <p className="text-sm text-gray-500 mt-1">Tente atualizar os dados ou verifique suas integrações.</p>
+            <div className="col-span-full text-center py-10 bg-card rounded-xl shadow-sm border">
+                <p className="text-muted-foreground">Não há dados para serem exibidos.</p>
+                <p className="text-sm text-muted-foreground mt-1">Tente atualizar os dados ou verifique suas integrações.</p>
             </div>
         </div>
      );
@@ -106,12 +121,13 @@ export const MetricsOverview = () => {
         const TrendIcon = isGoodTrend ? TrendingUp : TrendingDown;
         const trendColor = isGoodTrend ? 'text-green-600' : 'text-red-600';
         const Icon = metric.icon;
+        const colors = colorClasses[metric.color];
 
         return (
-          <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+          <div key={index} className="bg-card rounded-xl p-6 shadow-sm border hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-lg bg-${metric.color}-50`}>
-                <Icon className={`w-6 h-6 text-${metric.color}-600`} />
+              <div className={`p-3 rounded-lg ${colors.bg}`}>
+                <Icon className={`w-6 h-6 ${colors.text}`} />
               </div>
               <div className={`flex items-center space-x-1 text-sm ${trendColor}`}>
                 <TrendIcon className="w-4 h-4" />
@@ -119,8 +135,8 @@ export const MetricsOverview = () => {
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{metric.value}</h3>
-              <p className="text-sm text-gray-600">{metric.title}</p>
+              <h3 className="text-2xl font-bold text-card-foreground mb-1">{metric.value}</h3>
+              <p className="text-sm text-muted-foreground">{metric.title}</p>
             </div>
           </div>
         );

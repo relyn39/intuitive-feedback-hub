@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Insight } from '@/types/insights';
 import { InsightCard } from './InsightCard';
@@ -22,8 +21,8 @@ export const InsightList = ({ insights, isLoading, error }: InsightListProps) =>
   if (error || !insights || insights.length === 0) {
     return (
       <div className="text-center py-16">
-          <p className="text-gray-500 font-medium">{error ? "Erro ao carregar insights." : "Nenhum insight para exibir."}</p>
-          <p className="text-sm text-gray-400 mt-2">
+          <p className="font-medium text-muted-foreground">{error ? "Erro ao carregar insights." : "Nenhum insight para exibir."}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
             {error ? error.message : 'Clique em "Gerar Novos Insights" para começar.'}
           </p>
       </div>

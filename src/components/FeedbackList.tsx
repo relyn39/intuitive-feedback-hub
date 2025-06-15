@@ -39,13 +39,13 @@ const FeedbackList = () => {
   const renderAnalysis = (analysis: any) => {
     if (!analysis) return <Badge variant="outline">N/A</Badge>;
     const sentimentColor = {
-        positive: 'bg-green-100 text-green-800',
-        negative: 'bg-red-100 text-red-800',
-        neutral: 'bg-yellow-100 text-yellow-800',
+        positive: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300',
+        negative: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300',
+        neutral: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300',
     };
     return (
         <div className="flex flex-col gap-2 items-start">
-            <Badge className={sentimentColor[analysis.sentiment as keyof typeof sentimentColor] || 'bg-gray-100'}>
+            <Badge className={`${sentimentColor[analysis.sentiment as keyof typeof sentimentColor] || 'bg-gray-100 dark:bg-gray-800'}`}>
                 {analysis.sentiment}
             </Badge>
             <p className="text-xs text-muted-foreground">{analysis.summary}</p>
