@@ -15,6 +15,7 @@ import FeedbackReport from "./pages/FeedbackReport";
 import AuthPage from "./pages/AuthPage";
 import SettingsUsers from "./pages/SettingsUsers";
 import TopicsAnalysis from "./pages/TopicsAnalysis"; // Import the new page
+import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import { supabase } from './integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 
