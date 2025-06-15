@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Hash, ArrowUp, ArrowDown, Minus, PlusCircle, Loader2, RefreshCw } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -27,9 +26,9 @@ const fetchLatestTopics = async () => {
         .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
     
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
         throw new Error(error.message);
     }
 
