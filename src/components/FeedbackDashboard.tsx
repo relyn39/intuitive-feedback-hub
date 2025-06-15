@@ -7,10 +7,10 @@ import { NaturalLanguageQuery } from './NaturalLanguageQuery';
 import { InsightsPanel } from './InsightsPanel';
 import { TrendChart } from './TrendChart';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { syncIntegrations } from '@/services/integrationService';
 
 export const FeedbackDashboard = () => {
   const { toast } = useToast();
@@ -25,43 +25,7 @@ export const FeedbackDashboard = () => {
     });
 
     try {
-      const { data: integrations, error: integrationsError } = await supabase
-        .from('integrations')
-        .select('id, source')
-        .eq('is_active', true);
-
-      if (integrationsError) throw integrationsError;
-
-      if (!integrations || integrations.length === 0) {
-        toast({
-          title: "Nenhuma integração ativa",
-          description: "Não há integrações ativas para sincronizar.",
-        });
-        setIsUpdating(false);
-        return;
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Usuário não autenticado. Por favor, faça login novamente.');
-      }
-
-      const syncPromises = integrations.map(async (integration) => {
-        const functionName = `${integration.source}-sync`;
-        const { error } = await supabase.functions.invoke(functionName, {
-          body: { integrationId: integration.id },
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-
-        if (error) {
-          console.error(`Error syncing ${integration.source}:`, error);
-          throw new Error(`Falha ao sincronizar ${integration.source}.`);
-        }
-      });
-      
-      await Promise.all(syncPromises);
-      
-      await queryClient.invalidateQueries();
+      await syncIntegrations(queryClient);
 
       toast({
         title: "Sucesso!",
@@ -69,11 +33,18 @@ export const FeedbackDashboard = () => {
       });
 
     } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar",
-        description: error.message || "Não foi possível buscar os dados. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
+      if (error.message === "Nenhuma integração ativa para sincronizar.") {
+        toast({
+          title: "Nenhuma integração ativa",
+          description: "Não há integrações ativas para sincronizar.",
+        });
+      } else {
+        toast({
+          title: "Erro ao atualizar",
+          description: error.message || "Não foi possível buscar os dados. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsUpdating(false);
     }

@@ -1,7 +1,5 @@
-
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,6 +8,7 @@ import { Wand2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tables } from '@/integrations/supabase/types';
 import { Link } from 'react-router-dom';
+import { getRecentFeedbacks, analyzeFeedback } from '@/services/feedbackService';
 
 type Feedback = Tables<'feedbacks'>;
 
@@ -18,24 +17,11 @@ const FeedbackList = () => {
 
   const { data: feedbacks, isLoading } = useQuery({
     queryKey: ['feedbacks-recent'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('feedbacks')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      return data;
-    },
+    queryFn: getRecentFeedbacks,
   });
 
   const analysisMutation = useMutation({
-    mutationFn: async (feedbackId: string) => {
-        const { error } = await supabase.functions.invoke('analyze-feedback', {
-            body: { feedback_id: feedbackId },
-        });
-        if (error) throw new Error(error.message);
-    },
+    mutationFn: analyzeFeedback,
     onSuccess: () => {
         toast.success('Análise iniciada! O feedback será atualizado em breve.');
         queryClient.invalidateQueries({ queryKey: ['feedbacks-recent'] });

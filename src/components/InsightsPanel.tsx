@@ -2,44 +2,11 @@
 import React from 'react';
 import { Lightbulb, Loader2, Wand2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Insight } from '@/types/insights';
 import { InsightList } from './insights/InsightList';
-
-const fetchInsights = async (): Promise<Insight[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Usuário não autenticado.");
-
-  const { data, error } = await supabase
-    .from('insights')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data || [];
-};
-
-const generateInsights = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Usuário não autenticado.");
-
-    const { data, error } = await supabase.functions.invoke('generate-insights', {
-        body: { user_id: user.id }
-    });
-
-    if (error) {
-        throw new Error(`Falha ao gerar insights: ${error.message}`);
-    }
-    
-    if (data?.message) {
-      console.log(data.message)
-    }
-
-    return data;
-};
+import { fetchInsights, generateInsights } from '@/services/insightsService';
 
 export const InsightsPanel = () => {
   const queryClient = useQueryClient();
