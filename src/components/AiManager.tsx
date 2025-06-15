@@ -28,6 +28,19 @@ const getUserId = async () => {
   return user.id;
 };
 
+const modelOptions = {
+  openai: [
+    { value: 'gpt-4o', label: 'GPT-4o (Mais poderoso)' },
+    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Rápido e econômico)' },
+    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+  ],
+  google: [
+    { value: 'gemini-1.5-pro-latest', label: 'Gemini 1.5 Pro (Mais poderoso)' },
+    { value: 'gemini-1.5-flash-latest', label: 'Gemini 1.5 Flash (Rápido e econômico)' },
+    { value: 'gemini-1.0-pro', label: 'Gemini 1.0 Pro' },
+  ],
+};
+
 export const AiManager = () => {
   const queryClient = useQueryClient();
 
@@ -173,9 +186,20 @@ export const AiManager = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Modelo</FormLabel>
-                  <FormControl>
-                    <Input placeholder={watchedProvider === 'openai' ? 'ex: gpt-4o-mini' : 'ex: gemini-1.5-pro-latest'} {...field} />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um modelo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(modelOptions[watchedProvider] || []).map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormDescription>
                     {watchedProvider === 'openai'
                       ? 'O modelo da OpenAI que será usado para a análise.'
