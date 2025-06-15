@@ -1,4 +1,5 @@
 
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
@@ -33,7 +34,7 @@ serve(async (req) => {
       });
     }
 
-    // 2. Busca a configuração de IA do usuário para obter o modelo e a chave
+    // 2. Busca a configuração de IA do usuário
     const { data: aiConfig, error: configError } = await supabaseAdmin
         .from('ai_configurations')
         .select('model, provider, api_key')
@@ -42,20 +43,17 @@ serve(async (req) => {
     
     if (configError) throw configError;
     if (!aiConfig) throw new Error("Configuração de IA não encontrada para o usuário.");
+    
+    const { provider, model, api_key: userApiKey } = aiConfig;
 
-    if (aiConfig.provider !== 'openai') {
-      throw new Error(`O provedor de IA '${aiConfig.provider}' ainda não é suportado para esta funcionalidade.`);
-    }
-
-    const apiKey = aiConfig.api_key || Deno.env.get('OPENAI_API_KEY');
-    if (!apiKey) throw new Error('A chave da API da OpenAI não está configurada para este usuário nem no ambiente.');
+    const apiKey = userApiKey || Deno.env.get(`${provider.toUpperCase()}_API_KEY`);
+    if (!apiKey) throw new Error(`A chave da API para ${provider} não está configurada. Por favor, adicione-a nas configurações de IA.`);
 
     // 3. Formata os dados para o prompt
     const feedbackDataString = feedbacks.map(fb => {
       return `Título: ${fb.title}\nDescrição: ${fb.description}\nAnálise da IA: ${JSON.stringify(fb.analysis)}`;
     }).join('\n\n---\n\n');
 
-    // 4. Cria o prompt para a OpenAI
     const prompt = `
       Você é um assistente especialista em análise de dados de feedback de produto.
       Com base no conjunto de dados de feedback fornecido abaixo, responda à seguinte pergunta do usuário.
@@ -73,37 +71,62 @@ serve(async (req) => {
       Sua Resposta:
     `;
 
-    // 5. Chama a API da OpenAI
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: aiConfig.model || 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'Você é um assistente analista de dados de feedback.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.2,
-      }),
-    });
+    // 4. Chama a API do provedor de IA selecionado
+    let aiMessage = '';
+    
+    if (provider === 'openai' || provider === 'deepseek') {
+        const apiUrl = provider === 'openai' 
+            ? 'https://api.openai.com/v1/chat/completions' 
+            : 'https://api.deepseek.com/v1/chat/completions';
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                messages: [{ role: 'system', content: 'Você é um assistente analista de dados de feedback.' }, { role: 'user', content: prompt }],
+                temperature: 0.2,
+            }),
+        });
+        if (!response.ok) throw new Error(`Falha na API da ${provider}: ${await response.text()}`);
+        const data = await response.json();
+        aiMessage = data.choices[0].message.content;
 
-    if (!aiResponse.ok) {
-      const errorBody = await aiResponse.text();
-      throw new Error(`Falha na API da OpenAI: ${aiResponse.status} ${errorBody}`);
+    } else if (provider === 'google') {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        });
+        if (!response.ok) throw new Error(`Falha na API da Google: ${await response.text()}`);
+        const data = await response.json();
+        aiMessage = data.candidates[0].content.parts[0].text;
+
+    } else if (provider === 'claude') {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: model,
+                max_tokens: 2048,
+                messages: [{ role: 'user', content: prompt }],
+                system: 'Você é um assistente analista de dados de feedback.',
+            }),
+        });
+        if (!response.ok) throw new Error(`Falha na API da Anthropic: ${await response.text()}`);
+        const data = await response.json();
+        aiMessage = data.content[0].text;
+    } else {
+        throw new Error(`O provedor de IA '${provider}' não é suportado.`);
     }
-
-    const data = await aiResponse.json();
-    const aiMessage = data.choices[0].message.content;
 
     return new Response(JSON.stringify({ response: aiMessage }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Erro na função natural-language-query:', error);
+    console.error('Erro na função natural-language-query:', error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

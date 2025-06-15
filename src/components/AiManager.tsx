@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
 
 const aiConfigSchema = z.object({
-  provider: z.enum(['openai', 'google']),
+  provider: z.enum(['openai', 'google', 'claude', 'deepseek']),
   model: z.string().min(1, 'O modelo é obrigatório.'),
   api_key: z.string().optional(),
 });
@@ -39,6 +39,22 @@ const modelOptions = {
     { value: 'gemini-1.5-flash-latest', label: 'Gemini 1.5 Flash (Rápido e econômico)' },
     { value: 'gemini-1.0-pro', label: 'Gemini 1.0 Pro' },
   ],
+  claude: [
+    { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus (Mais poderoso)' },
+    { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet (Equilibrado)' },
+    { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku (Rápido e econômico)' },
+  ],
+  deepseek: [
+    { value: 'deepseek-chat', label: 'DeepSeek Chat (Modelo de Chat)' },
+    { value: 'deepseek-coder', label: 'DeepSeek Coder (Modelo de Código)' },
+  ],
+};
+
+const providerDescriptions = {
+  openai: 'O modelo da OpenAI que será usado para a análise.',
+  google: 'O modelo do Google que será usado para a análise.',
+  claude: 'O modelo da Anthropic (Claude) que será usado para a análise.',
+  deepseek: 'O modelo da Deepseek que será usado para a análise.',
 };
 
 export const AiManager = () => {
@@ -64,7 +80,7 @@ export const AiManager = () => {
         
         const dataToUpsert: {
             user_id: string;
-            provider: 'openai' | 'google';
+            provider: 'openai' | 'google' | 'claude' | 'deepseek';
             model: string;
             updated_at: string;
             api_key?: string;
@@ -110,14 +126,13 @@ export const AiManager = () => {
   useEffect(() => {
     if (config) {
       let defaultModel = '';
-      if (config.provider === 'openai') {
-        defaultModel = 'gpt-4o-mini';
-      } else if (config.provider === 'google') {
-        defaultModel = 'gemini-1.5-pro-latest';
+      const provider = config.provider as keyof typeof modelOptions;
+      if (modelOptions[provider]) {
+        defaultModel = modelOptions[provider][0].value;
       }
 
       form.reset({
-        provider: config.provider as 'openai' | 'google',
+        provider: provider,
         model: config.model || defaultModel,
         api_key: '', // Sempre manter o campo da chave em branco ao carregar
       });
@@ -153,12 +168,17 @@ export const AiManager = () => {
                 <FormItem>
                   <FormLabel>Provedor</FormLabel>
                   <Select
-                    onValueChange={(value: 'openai' | 'google') => {
+                    onValueChange={(value: 'openai' | 'google' | 'claude' | 'deepseek') => {
                       field.onChange(value);
+                      // Set default model for the selected provider
                       if (value === 'openai') {
                         form.setValue('model', 'gpt-4o-mini', { shouldValidate: true });
                       } else if (value === 'google') {
-                        form.setValue('model', 'gemini-1.5-pro-latest', { shouldValidate: true });
+                        form.setValue('model', 'gemini-1.5-flash-latest', { shouldValidate: true });
+                      } else if (value === 'claude') {
+                        form.setValue('model', 'claude-3-haiku-20240307', { shouldValidate: true });
+                      } else if (value === 'deepseek') {
+                        form.setValue('model', 'deepseek-chat', { shouldValidate: true });
                       }
                     }}
                     value={field.value}
@@ -171,6 +191,8 @@ export const AiManager = () => {
                     <SelectContent>
                       <SelectItem value="openai">OpenAI</SelectItem>
                       <SelectItem value="google">Google</SelectItem>
+                      <SelectItem value="claude">Claude (Anthropic)</SelectItem>
+                      <SelectItem value="deepseek">Deepseek</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
@@ -201,9 +223,7 @@ export const AiManager = () => {
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    {watchedProvider === 'openai'
-                      ? 'O modelo da OpenAI que será usado para a análise.'
-                      : 'O modelo do Google que será usado para a análise.'}
+                    {providerDescriptions[watchedProvider]}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
