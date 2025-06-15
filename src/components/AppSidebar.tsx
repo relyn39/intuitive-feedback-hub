@@ -80,7 +80,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent className="flex h-full flex-col justify-between">
         <SidebarGroup>
-          <SidebarGroupLabel>Plataforma de Feedback</SidebarGroupLabel>
+          <SidebarGroupLabel>Feedback-Hub</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
