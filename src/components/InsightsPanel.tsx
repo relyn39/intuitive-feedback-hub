@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 interface Insight {
   id: string;
@@ -14,6 +15,7 @@ interface Insight {
   severity: 'info' | 'warning' | 'success' | 'error';
   action: string | null;
   created_at: string;
+  tags: string[] | null;
 }
 
 const iconMap = {
@@ -120,6 +122,15 @@ export const InsightsPanel = () => {
                   <div className="flex-1">
                     <h4 className="font-medium text-sm mb-1">{insight.title}</h4>
                     <p className="text-sm opacity-90 mb-2">{insight.description}</p>
+                    {insight.tags && insight.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {insight.tags.map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-xs bg-white/50">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     {insight.action && (
                       <button className="text-xs font-medium px-2 py-1 bg-white bg-opacity-70 rounded hover:bg-opacity-100 transition-colors">
                         {insight.action}
