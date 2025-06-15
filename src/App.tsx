@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -21,6 +22,17 @@ import type { Session } from '@supabase/supabase-js';
 
 const queryClient = new QueryClient();
 
+declare global {
+  interface Window {
+    pendo?: {
+      initialize: (options: {
+        visitor: { id: string; email?: string };
+        account: { id: string };
+      }) => void;
+    };
+  }
+}
+
 const App = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +49,22 @@ const App = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (session && window.pendo) {
+      window.pendo.initialize({
+        visitor: {
+          id: session.user.id,
+          email: session.user.email,
+        },
+        account: {
+          // Using user's id as account id as a placeholder.
+          // This should be updated if your application has a concept of accounts/organizations.
+          id: session.user.id,
+        },
+      });
+    }
+  }, [session]);
 
   if (loading) {
     return (
