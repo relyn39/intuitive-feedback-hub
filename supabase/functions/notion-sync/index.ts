@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
@@ -57,7 +58,7 @@ serve(async (req) => {
       integration = data
     }
 
-    const { apiToken, databaseId } = integration.config as any
+    const { apiToken, databaseId, titleProperty, descriptionProperty } = integration.config as any
     const userId = integration.user_id
 
     // Create sync log
@@ -105,8 +106,8 @@ serve(async (req) => {
       let itemsUpdated = 0
 
       for (const page of pages) {
-        const title = extractNotionTitle(page.properties)
-        const description = extractNotionDescription(page.properties)
+        const title = extractNotionTitle(page.properties, titleProperty)
+        const description = extractNotionDescription(page.properties, descriptionProperty)
         const priority = extractNotionPriority(page.properties)
         const status = extractNotionStatus(page.properties)
         const tags = extractNotionTags(page.properties)
@@ -204,27 +205,44 @@ serve(async (req) => {
   }
 })
 
-function extractNotionTitle(properties: any): string {
-  // Look for title property
-  for (const [key, value] of Object.entries(properties)) {
-    if (value && typeof value === 'object' && 'title' in value) {
-      const title = (value as any).title
-      if (title && title[0] && title[0].plain_text) {
-        return title[0].plain_text
+function extractNotionTitle(properties: any, titlePropertyName?: string): string {
+  // If a specific title property name is provided, use it.
+  if (titlePropertyName && properties[titlePropertyName] && properties[titlePropertyName].type === 'title') {
+    const prop = properties[titlePropertyName];
+    if (prop.title && prop.title[0] && prop.title[0].plain_text) {
+      return prop.title[0].plain_text;
+    }
+  }
+  
+  // Fallback for backward compatibility or if no property is configured
+  for (const value of Object.values(properties)) {
+    const p = value as any;
+    if (p && p.type === 'title') {
+      if (p.title && p.title[0] && p.title[0].plain_text) {
+        return p.title[0].plain_text;
       }
     }
   }
   return ''
 }
 
-function extractNotionDescription(properties: any): string {
-  // Look for rich_text property that might contain description
-  for (const [key, value] of Object.entries(properties)) {
-    if (value && typeof value === 'object' && 'rich_text' in value) {
-      const richText = (value as any).rich_text
-      if (richText && richText[0] && richText[0].plain_text) {
-        return richText[0].plain_text
-      }
+function extractNotionDescription(properties: any, descriptionPropertyName?: string): string {
+  // If a specific description property name is provided, use it.
+  if (descriptionPropertyName && properties[descriptionPropertyName] && properties[descriptionPropertyName].type === 'rich_text') {
+    const prop = properties[descriptionPropertyName];
+    if (prop.rich_text) {
+      return prop.rich_text.map((text: any) => text.plain_text).join('\n');
+    }
+  }
+
+  // Fallback for backward compatibility: find the first rich_text property
+  for (const value of Object.values(properties)) {
+    const p = value as any;
+    // ensure we are not picking up a title property, as they can also have rich_text
+    if (p && p.type === 'rich_text') {
+        if (p.rich_text) {
+          return p.rich_text.map((text: any) => text.plain_text).join('\n');
+        }
     }
   }
   return ''

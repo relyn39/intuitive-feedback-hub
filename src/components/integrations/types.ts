@@ -8,6 +8,8 @@ export interface JiraConfig {
 export interface NotionConfig {
   apiToken?: string;
   databaseId?: string;
+  titleProperty?: string;
+  descriptionProperty?: string;
 }
 
 export interface ZohoConfig {
