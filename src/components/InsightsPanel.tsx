@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Lightbulb, TrendingUp, AlertCircle, Target, Loader2, Wand2, Pencil, Check, X } from 'lucide-react';
+import { Lightbulb, TrendingUp, AlertCircle, Target, Loader2, Wand2, Pencil, Check, X, PlusCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -96,6 +95,29 @@ export const InsightsPanel = () => {
     onError: (err: Error) => {
       toast({ title: 'Erro ao atualizar tags', description: err.message, variant: 'destructive' });
     },
+  });
+
+  const createOpportunityMutation = useMutation({
+      mutationFn: async ({ title, description }: { title: string; description: string | null }) => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error("Usuário não autenticado.");
+          
+          const { error } = await supabase.from('product_opportunities').insert({
+            title: title,
+            description: description,
+            user_id: user.id,
+            status: 'backlog',
+          });
+          if (error) throw error;
+          return title;
+      },
+      onSuccess: (title) => {
+          toast({ title: "Oportunidade Criada!", description: `"${title}" foi adicionado ao seu roadmap.` });
+          queryClient.invalidateQueries({ queryKey: ['product_opportunities'] });
+      },
+      onError: (err: Error) => {
+          toast({ title: "Erro ao criar oportunidade", description: err.message, variant: 'destructive' });
+      },
   });
 
   const handleStartEditing = (insight: Insight) => {
@@ -195,11 +217,25 @@ export const InsightsPanel = () => {
                       </div>
                     )}
 
-                    {insight.action && (
-                      <button className="text-xs font-medium px-2 py-1 bg-white bg-opacity-70 rounded hover:bg-opacity-100 transition-colors">
-                        {insight.action}
-                      </button>
-                    )}
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-black border-opacity-5">
+                      {insight.action && (
+                          <span className="text-xs text-gray-600 italic max-w-[50%]">{insight.action}</span>
+                      )}
+                      <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => createOpportunityMutation.mutate({ title: insight.title, description: insight.description })}
+                          disabled={createOpportunityMutation.isPending && createOpportunityMutation.variables?.title === insight.title}
+                          className="ml-auto"
+                      >
+                          {createOpportunityMutation.isPending && createOpportunityMutation.variables?.title === insight.title ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                              <PlusCircle className="mr-2 h-4 w-4" />
+                          )}
+                          Criar Oportunidade
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
