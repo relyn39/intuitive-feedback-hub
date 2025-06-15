@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { AddManualFeedback } from '@/components/AddManualFeedback';
 import { ImportFeedback } from '@/components/ImportFeedback';
+import { Input } from '@/components/ui/input';
 
 type Feedback = Tables<'feedbacks'>;
 
@@ -52,6 +53,8 @@ const FeedbackReport = () => {
     
     const [page, setPage] = useState(1);
     const [sourceFilter, setSourceFilter] = useState(source || 'all');
+    const [tagInput, setTagInput] = useState('');
+    const [debouncedTagFilter, setDebouncedTagFilter] = useState('');
     const [addManualOpen, setAddManualOpen] = useState(false);
     const [importOpen, setImportOpen] = useState(false);
 
@@ -60,8 +63,19 @@ const FeedbackReport = () => {
         setPage(1);
     }, [source]);
 
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedTagFilter(tagInput);
+            setPage(1);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [tagInput]);
+
     const { data, isLoading, isError } = useQuery({
-        queryKey: ['feedbacks', page, ITEMS_PER_PAGE, sourceFilter],
+        queryKey: ['feedbacks', page, ITEMS_PER_PAGE, sourceFilter, debouncedTagFilter],
         queryFn: async () => {
             const from = (page - 1) * ITEMS_PER_PAGE;
             const to = from + ITEMS_PER_PAGE - 1;
@@ -74,6 +88,10 @@ const FeedbackReport = () => {
 
             if (sourceFilter !== 'all') {
                 query = query.eq('source', sourceFilter);
+            }
+
+            if (debouncedTagFilter) {
+                query = query.contains('analysis', { tags: [debouncedTagFilter.toLowerCase().trim()] });
             }
 
             const { data, error, count } = await query;
@@ -129,7 +147,7 @@ const FeedbackReport = () => {
                                 <CardTitle>Relatório de Feedbacks</CardTitle>
                                 <CardDescription>Visualize, analise e gerencie todos os feedbacks recebidos.</CardDescription>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center flex-wrap gap-2">
                                 <div className="w-full sm:w-auto sm:min-w-[200px]">
                                     <Select value={sourceFilter} onValueChange={handleFilterChange}>
                                         <SelectTrigger>
@@ -144,6 +162,13 @@ const FeedbackReport = () => {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                </div>
+                                <div className="w-full sm:w-auto sm:min-w-[200px]">
+                                    <Input
+                                        placeholder="Filtrar por tag da IA..."
+                                        value={tagInput}
+                                        onChange={(e) => setTagInput(e.target.value)}
+                                    />
                                 </div>
                                 <Dialog open={addManualOpen} onOpenChange={setAddManualOpen}>
                                     <DialogTrigger asChild>
