@@ -40,6 +40,21 @@ serve(async (req) => {
     
     const feedbackIds = feedbacks.map(f => f.id);
 
+    // Fetch latest topic analysis to compare against for trend calculation
+    const { data: previousAnalysis, error: previousAnalysisError } = await supabaseAdmin
+      .from('topic_analysis_results')
+      .select('topics')
+      .eq('user_id', user_id)
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (previousAnalysisError) {
+      console.warn('Could not fetch previous topic analysis, change will be 0.', previousAnalysisError.message);
+    }
+    const previousTopics = previousAnalysis?.topics ?? [];
+
     // 2. Fetch user's AI configuration
     const { data: aiConfig, error: configError } = await supabaseAdmin
         .from('ai_configurations')
@@ -141,11 +156,20 @@ serve(async (req) => {
 
     const analysis = JSON.parse(aiResponseText);
     
-    const topicsWithDetails = analysis.topics.map((topic: any, index: number) => ({
-      ...topic,
-      id: index + 1,
-      change: 0 // Placeholder
-    }));
+    const topicsWithDetails = analysis.topics.map((newTopic: any, index: number) => {
+      const oldTopic = previousTopics.find((t: any) => t.name === newTopic.name);
+      let change = 0;
+      
+      if (oldTopic && oldTopic.count > 0) {
+        change = Math.round(((newTopic.count - oldTopic.count) / oldTopic.count) * 100);
+      }
+      
+      return {
+        ...newTopic,
+        id: index + 1,
+        change: change,
+      };
+    });
     
     // 5. Store the result in the new table
     const { error: insertError } = await supabaseAdmin

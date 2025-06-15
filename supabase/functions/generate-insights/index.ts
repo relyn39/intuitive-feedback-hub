@@ -54,8 +54,8 @@ serve(async (req) => {
     // 4. Create the prompt for the AI
     const prompt = `
       Você é um assistente especialista em análise de dados de feedback de produto. Com base no conjunto de dados de feedback fornecido, gere de 3 a 5 insights importantes.
-      Para cada insight, identifique se é uma 'trend' (tendência), 'alert' (alerta) ou 'opportunity' (oportunidade).
-      Forneça um título conciso, uma descrição de uma frase, a severidade ('info', 'warning', 'success') e uma ação sugerida.
+      Para cada insight, identifique se é uma 'trend' (tendência), 'alert' (alerta), 'opportunity' (oportunidade) ou 'other' (outro).
+      Forneça um título conciso, uma descrição de uma frase, a severidade ('info', 'warning', 'success', 'error') e uma ação sugerida.
       Retorne o resultado como um objeto JSON válido com uma única chave "insights", que é um array de objetos.
       Cada objeto no array deve ter as seguintes chaves: "type", "title", "description", "severity", "action".
 
@@ -68,6 +68,13 @@ serve(async (req) => {
             "description": "Um número significativo de usuários está mencionando o desejo por um recurso de modo escuro.",
             "severity": "info",
             "action": "Considerar priorizar o desenvolvimento do modo escuro"
+          },
+          {
+            "type": "alert",
+            "title": "Aumento de erros após a última atualização",
+            "description": "Vários usuários relatam que o aplicativo está travando na tela de login desde a versão 2.5.",
+            "severity": "error",
+            "action": "Investigar os logs de erro e reverter a atualização de login, se necessário."
           }
         ]
       }
