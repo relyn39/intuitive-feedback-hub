@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { ResetPasswordDialog } from '@/components/ResetPasswordDialog';
 
 const authSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
@@ -59,6 +59,7 @@ const AuthForm = ({ form, onSubmit }: {
 
 const AuthPage = () => {
     const navigate = useNavigate();
+    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
 
     const loginForm = useForm<AuthFormValues>({
         resolver: zodResolver(authSchema),
@@ -99,6 +100,11 @@ const AuthPage = () => {
                         form={loginForm}
                         onSubmit={onLogin}
                     />
+                    <div className="mt-4 flex justify-center">
+                        <Button variant="link" className="p-0 h-auto" onClick={() => setIsResetDialogOpen(true)}>
+                            Esqueceu sua senha?
+                        </Button>
+                    </div>
                     <div className="relative my-4">
                         <div className="absolute inset-0 flex items-center">
                             <span className="w-full border-t" />
@@ -114,9 +120,9 @@ const AuthPage = () => {
                     </Button>
                 </CardContent>
             </Card>
+            <ResetPasswordDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen} />
         </div>
     );
 };
 
 export default AuthPage;
-

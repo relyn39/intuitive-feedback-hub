@@ -75,6 +75,7 @@ const App = () => {
           ) : (
              <Routes>
                 <Route path="/auth" element={<AuthPage />} />
+                <Route path="/update-password" element={<UpdatePasswordPage />} />
                 <Route path="*" element={<Navigate to="/auth" replace />} />
             </Routes>
           )}
