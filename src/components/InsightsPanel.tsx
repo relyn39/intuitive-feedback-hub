@@ -29,11 +29,11 @@ export const InsightsPanel = () => {
   });
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 min-h-[300px]">
+    <div className="bg-card rounded-xl p-6 shadow-sm border min-h-[300px]">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center space-x-2">
           <Lightbulb className="w-5 h-5 text-yellow-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Insights Automáticos</h3>
+          <h3 className="text-lg font-semibold text-card-foreground">Insights Automáticos</h3>
         </div>
         <Button onClick={() => generateInsightsMutation.mutate()} disabled={generateInsightsMutation.isPending} size="sm">
           {generateInsightsMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}

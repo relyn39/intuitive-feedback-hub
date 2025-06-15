@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Hash, ArrowUp, ArrowDown, Minus, PlusCircle, Loader2, RefreshCw } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -88,11 +89,11 @@ export const TopicsCluster = () => {
     });
 
     return (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-card rounded-xl p-6 shadow-sm border">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Tópicos Mais Discutidos</h3>
-                    <p className="text-sm text-gray-600">Transforme tópicos em oportunidades para seu roadmap</p>
+                    <h3 className="text-lg font-semibold text-card-foreground">Tópicos Mais Discutidos</h3>
+                    <p className="text-sm text-muted-foreground">Transforme tópicos em oportunidades para seu roadmap</p>
                 </div>
                 <Button 
                     onClick={() => analyzeTopicsMutation.mutate()}
@@ -114,10 +115,10 @@ export const TopicsCluster = () => {
 
                 {!isLoading && (isError || (!topics || topics.length === 0)) && (
                     <div className="text-center py-10">
-                        <p className="text-gray-600">
+                        <p className="text-muted-foreground">
                             {isError ? "Ocorreu um erro ao buscar os tópicos." : "Nenhuma análise de tópicos encontrada."}
                         </p>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                             {isError ? error.message : "Clique em \"Analisar Tópicos\" para gerar a primeira análise."}
                         </p>
                     </div>
@@ -125,23 +126,23 @@ export const TopicsCluster = () => {
                 
                 {!isLoading && !isError && topics && topics.map((topic) => {
                     const sentimentColors = {
-                        positive: 'bg-green-50 border-green-200',
-                        negative: 'bg-red-50 border-red-200',
-                        neutral: 'bg-gray-50 border-gray-200'
+                        positive: 'bg-green-50 border-green-200 dark:bg-green-950/50 dark:border-green-800',
+                        negative: 'bg-red-50 border-red-200 dark:bg-red-950/50 dark:border-red-800',
+                        neutral: 'bg-gray-50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700'
                     };
 
                     const ChangeIcon = topic.change > 0 ? ArrowUp : topic.change < 0 ? ArrowDown : Minus;
-                    const changeColor = topic.change > 0 ? 'text-green-600' : topic.change < 0 ? 'text-red-600' : 'text-gray-600';
+                    const changeColor = topic.change > 0 ? 'text-green-600' : topic.change < 0 ? 'text-red-600' : 'text-muted-foreground';
 
                     return (
                         <div key={topic.id} className={`p-4 rounded-lg border ${sentimentColors[topic.sentiment as keyof typeof sentimentColors]}`}>
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-3">
                                 <div className="flex items-center space-x-3">
-                                    <Hash className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                                    <h4 className="font-medium text-gray-900">{topic.name}</h4>
+                                    <Hash className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                                    <h4 className="font-medium text-card-foreground">{topic.name}</h4>
                                 </div>
                                 <div className="flex items-center space-x-4">
-                                    <span className="text-sm font-medium text-gray-700">{topic.count.toLocaleString()} menções</span>
+                                    <span className="text-sm font-medium text-foreground">{topic.count.toLocaleString()} menções</span>
                                     <div className={`flex items-center space-x-1 ${changeColor}`}>
                                         <ChangeIcon className="w-3 h-3" />
                                         <span className="text-xs font-medium">{Math.abs(topic.change)}%</span>
@@ -151,7 +152,7 @@ export const TopicsCluster = () => {
                             
                             <div className="flex flex-wrap gap-2 mb-4">
                                 {topic.keywords.map((keyword, index) => (
-                                    <span key={index} className="px-2 py-1 bg-white bg-opacity-60 text-xs text-gray-700 rounded-md">
+                                    <span key={index} className="px-2 py-1 bg-background/60 text-xs text-foreground rounded-md">
                                         {keyword}
                                     </span>
                                 ))}
