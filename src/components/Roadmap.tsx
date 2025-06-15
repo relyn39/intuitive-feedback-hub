@@ -1,11 +1,9 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import AddOpportunityDialog from './AddOpportunityDialog';
 
 // Tipos locais, já que types.ts é somente leitura
 type OpportunityStatus = 'backlog' | 'próximo' | 'em_andamento' | 'concluído';
@@ -44,10 +42,7 @@ const Roadmap = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Roadmap Visual</CardTitle>
-        <Button size="sm" disabled>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Nova Oportunidade
-        </Button>
+        <AddOpportunityDialog />
       </CardHeader>
       <CardContent>
         {isLoading && (
