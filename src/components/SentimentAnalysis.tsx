@@ -1,8 +1,11 @@
+
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { useDemoMode } from '@/hooks/useDemoMode';
 
 const SENTIMENT_CONFIG = {
   positive: { name: 'Positivo', color: '#10b981' },
@@ -13,9 +16,14 @@ const SENTIMENT_CONFIG = {
 type Sentiment = keyof typeof SENTIMENT_CONFIG;
 
 export const SentimentAnalysis = () => {
+  const { isDemoMode, getDemoFeedbacks } = useDemoMode();
+
   const { data: feedbacks, isLoading } = useQuery({
     queryKey: ['sentiments'],
     queryFn: async () => {
+      if (isDemoMode) {
+        return getDemoFeedbacks().map(fb => ({ analysis: fb.analysis }));
+      }
       const { data, error } = await supabase.from('feedbacks').select('analysis');
       if (error) throw error;
       return data;
@@ -76,7 +84,12 @@ export const SentimentAnalysis = () => {
 
   return (
     <div className="bg-card rounded-xl p-6 shadow-sm border">
-      <h3 className="text-lg font-semibold text-card-foreground mb-6">Distribuição de Sentimento</h3>
+      <h3 className="text-lg font-semibold text-card-foreground mb-6 flex items-center gap-2">
+        Distribuição de Sentimento
+        {isDemoMode && (
+          <Badge variant="outline" className="text-xs">DEMO</Badge>
+        )}
+      </h3>
       
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">

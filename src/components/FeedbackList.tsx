@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -9,15 +10,17 @@ import { toast } from 'sonner';
 import { Tables } from '@/integrations/supabase/types';
 import { Link } from 'react-router-dom';
 import { getRecentFeedbacks, analyzeFeedback } from '@/services/feedbackService';
+import { useDemoMode } from '@/hooks/useDemoMode';
 
 type Feedback = Tables<'feedbacks'>;
 
 const FeedbackList = () => {
   const queryClient = useQueryClient();
+  const { isDemoMode, getDemoFeedbacks } = useDemoMode();
 
   const { data: feedbacks, isLoading } = useQuery({
     queryKey: ['feedbacks-recent'],
-    queryFn: getRecentFeedbacks,
+    queryFn: isDemoMode ? () => Promise.resolve(getDemoFeedbacks().slice(0, 5)) : getRecentFeedbacks,
   });
 
   const analysisMutation = useMutation({
@@ -61,8 +64,18 @@ const FeedbackList = () => {
       <CardHeader>
         <div className="flex items-center justify-between">
             <div>
-                <CardTitle>Últimos Feedbacks</CardTitle>
-                <CardDescription>Visualize os 5 feedbacks mais recentes.</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  Últimos Feedbacks
+                  {isDemoMode && (
+                    <Badge variant="outline" className="text-xs">DEMO</Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {isDemoMode 
+                    ? "Dados de demonstração - feedbacks fictícios para mostrar as funcionalidades"
+                    : "Visualize os 5 feedbacks mais recentes."
+                  }
+                </CardDescription>
             </div>
             <Button asChild variant="outline" size="sm">
                 <Link to="/feedback">
@@ -92,8 +105,8 @@ const FeedbackList = () => {
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => analysisMutation.mutate(fb.id)}
-                    disabled={analysisMutation.isPending && analysisMutation.variables === fb.id}
+                    onClick={() => isDemoMode ? toast.info('Modo demonstração ativo - análise simulada') : analysisMutation.mutate(fb.id)}
+                    disabled={(!isDemoMode && analysisMutation.isPending && analysisMutation.variables === fb.id)}
                   >
                     <Wand2 className="h-4 w-4 mr-2" />
                     Analisar

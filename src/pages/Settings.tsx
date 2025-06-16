@@ -3,6 +3,7 @@ import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
+import { DemoModeSettings } from '@/components/DemoModeSettings';
 
 const Settings = () => {
   const location = useLocation()
@@ -27,6 +28,8 @@ const Settings = () => {
                 Gerencie as configurações da sua plataforma de feedback
               </p>
             </div>
+            
+            <DemoModeSettings />
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div className="rounded-lg border p-6">
