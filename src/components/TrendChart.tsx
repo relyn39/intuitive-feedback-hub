@@ -1,9 +1,12 @@
+
 import React from 'react';
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfDay } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { useDemoMode } from '@/hooks/useDemoMode';
 
 const processChartData = (feedbacks: any[]) => {
   if (!feedbacks) return [];
@@ -38,10 +41,30 @@ const processChartData = (feedbacks: any[]) => {
   }));
 };
 
+const getDemoChartData = () => {
+  const demoData = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = subDays(new Date(), i);
+    const formattedDate = format(date, 'dd/MM');
+    demoData.push({
+      date: formattedDate,
+      positive: Math.floor(Math.random() * 8) + 2, // 2-10
+      negative: Math.floor(Math.random() * 4) + 1, // 1-5
+      neutral: Math.floor(Math.random() * 3) + 1,  // 1-4
+    });
+  }
+  return demoData;
+};
+
 export const TrendChart = () => {
+  const { isDemoMode, getDemoFeedbacks } = useDemoMode();
+
   const { data: feedbacks, isLoading } = useQuery({
     queryKey: ['feedbacks-trend'],
     queryFn: async () => {
+      if (isDemoMode) {
+        return getDemoFeedbacks();
+      }
       const sevenDaysAgo = subDays(startOfDay(new Date()), 6);
       const { data, error } = await supabase
         .from('feedbacks')
@@ -53,14 +76,27 @@ export const TrendChart = () => {
     },
   });
 
-  const chartData = React.useMemo(() => processChartData(feedbacks), [feedbacks]);
+  const chartData = React.useMemo(() => 
+    isDemoMode ? getDemoChartData() : processChartData(feedbacks), 
+    [feedbacks, isDemoMode]
+  );
 
   return (
     <div className="bg-card rounded-xl p-6 shadow-sm border">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-card-foreground">Análise de Sentimento - Últimos 7 dias</h3>
-          <p className="text-sm text-muted-foreground">Distribuição e tendências do sentimento dos feedbacks</p>
+          <h3 className="text-lg font-semibold text-card-foreground flex items-center gap-2">
+            Análise de Sentimento - Últimos 7 dias
+            {isDemoMode && (
+              <Badge variant="outline" className="text-xs">DEMO</Badge>
+            )}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {isDemoMode 
+              ? "Dados de demonstração - tendências fictícias para mostrar as funcionalidades"
+              : "Distribuição e tendências do sentimento dos feedbacks"
+            }
+          </p>
         </div>
         <div className="flex space-x-4 text-sm">
           <div className="flex items-center space-x-2">
@@ -83,7 +119,7 @@ export const TrendChart = () => {
           <div className="w-full h-full flex items-center justify-center">
             <Skeleton className="w-full h-full" />
           </div>
-        ) : !chartData || chartData.every(d => d.positive === 0 && d.negative === 0 && d.neutral === 0) ? (
+        ) : !chartData || (!isDemoMode && chartData.every(d => d.positive === 0 && d.negative === 0 && d.neutral === 0)) ? (
           <div className="w-full h-full flex flex-col items-center justify-center text-center">
             <p className="text-muted-foreground">Não há dados de sentimento para os últimos 7 dias.</p>
             <p className="text-sm text-muted-foreground mt-1">Analise alguns feedbacks para ver o gráfico.</p>
