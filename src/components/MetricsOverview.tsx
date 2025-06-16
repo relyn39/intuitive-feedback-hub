@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { TrendingUp, TrendingDown, Star, AlertTriangle, Package } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useDemoMode } from '@/hooks/useDemoMode';
 
 interface MetricData {
   value: number;
@@ -29,6 +31,23 @@ const fetchMetrics = async (): Promise<MetricsResponse> => {
   return data;
 };
 
+const getDemoMetrics = (): MetricsResponse => {
+  return {
+    totalItems: {
+      value: 247,
+      change: 12.5
+    },
+    positiveSentiment: {
+      value: 73.2,
+      change: 8.3
+    },
+    criticalIssues: {
+      value: 18,
+      change: -15.7
+    }
+  };
+};
+
 const MetricCardSkeleton = () => (
   <div className="bg-card rounded-xl p-6 shadow-sm border">
     <div className="flex items-center justify-between mb-4">
@@ -43,9 +62,11 @@ const MetricCardSkeleton = () => (
 );
 
 export const MetricsOverview = () => {
+  const { isDemoMode } = useDemoMode();
+
   const { data, isLoading, isError, error } = useQuery<MetricsResponse>({
     queryKey: ['metrics-overview'],
-    queryFn: fetchMetrics,
+    queryFn: isDemoMode ? getDemoMetrics : fetchMetrics,
     refetchOnWindowFocus: false,
   });
 
@@ -102,7 +123,7 @@ export const MetricsOverview = () => {
     );
   }
 
-  if (isError) {
+  if (isError && !isDemoMode) {
      return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="col-span-full text-center py-10 bg-card rounded-xl shadow-sm border">
